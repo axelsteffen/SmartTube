@@ -561,10 +561,6 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
                 option -> mPlayerTweaksData.setSuggestionsDisabled(option.isSelected()),
                 mPlayerTweaksData.isSuggestionsDisabled()));
 
-        options.add(UiOptionItem.from(getContext().getString(R.string.hide_watched_from_suggestions),
-                option -> mPlayerTweaksData.setHideWatchedFromSuggestionsEnabled(option.isSelected()),
-                mPlayerTweaksData.isHideWatchedFromSuggestionsEnabled()));
-
         options.add(UiOptionItem.from(getContext().getString(R.string.player_number_key_seek),
                 option -> mPlayerData.setNumberKeySeekEnabled(option.isSelected()),
                 mPlayerData.isNumberKeySeekEnabled()));
