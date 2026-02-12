@@ -192,8 +192,8 @@ public class SuggestionsController extends BasePlayerController {
                             getPlayer().showProgressBar(false);
 
                             VideoGroup videoGroup = VideoGroup.from(group, continueMediaGroup);
-                            getPlayer().updateSuggestions(videoGroup);
                             mBrowseProcessor.process(videoGroup);
+                            getPlayer().updateSuggestions(videoGroup);
 
                             mergeUserAndRemoteQueue(videoGroup);
 
@@ -405,8 +405,8 @@ public class SuggestionsController extends BasePlayerController {
                     }
                 }
 
-                getPlayer().updateSuggestions(videoGroup);
                 mBrowseProcessor.process(videoGroup);
+                getPlayer().updateSuggestions(videoGroup);
 
                 if (groupIndex == 0) {
                     focusAndContinueIfNeeded(videoGroup);
@@ -560,6 +560,7 @@ public class SuggestionsController extends BasePlayerController {
             return;
         }
 
+        mBrowseProcessor.process(video.getGroup());
         getPlayer().updateSuggestions(video.getGroup());
         focusAndContinueIfNeeded(video.getGroup(), () -> findNextSectionVideoIfNeeded(video));
     }

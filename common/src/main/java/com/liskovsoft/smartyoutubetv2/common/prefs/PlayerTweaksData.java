@@ -107,6 +107,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     private boolean mIsNetworkErrorFixingDisabled;
     private boolean mIsDontResizeVideoToFitDialogEnabled;
     private boolean mIsSuggestionsHorizontallyScrolled;
+    private boolean mIsHideWatchedFromSuggestionsEnabled;
     private final Runnable mPersistDataInt = this::persistDataInt;
 
     private PlayerTweaksData(Context context) {
@@ -671,6 +672,15 @@ public class PlayerTweaksData implements ProfileChangeListener {
         persistData();
     }
 
+    public boolean isHideWatchedFromSuggestionsEnabled() {
+        return mIsHideWatchedFromSuggestionsEnabled;
+    }
+
+    public void setHideWatchedFromSuggestionsEnabled(boolean enable) {
+        mIsHideWatchedFromSuggestionsEnabled = enable;
+        persistData();
+    }
+
     private void restoreData() {
         String data = mPrefs.getProfileData(VIDEO_PLAYER_TWEAKS_DATA);
 
@@ -740,6 +750,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsSuggestionsHorizontallyScrolled = Helpers.parseBoolean(split, 56, false);
         mIsQuickSkipShortsAltEnabled = Helpers.parseBoolean(split, 57, false);
         mIsQuickSkipVideosAltEnabled = Helpers.parseBoolean(split, 58, false);
+        mIsHideWatchedFromSuggestionsEnabled = Helpers.parseBoolean(split, 59, false);
 
         updateDefaultValues();
     }
@@ -767,7 +778,8 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsUnsafeAudioFormatsEnabled, null, mIsLoopShortsEnabled, mIsQuickSkipShortsEnabled, mIsRememberPositionOfLiveVideosEnabled,
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
-                mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled
+                mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled,
+                mIsHideWatchedFromSuggestionsEnabled
                 ));
     }
 
