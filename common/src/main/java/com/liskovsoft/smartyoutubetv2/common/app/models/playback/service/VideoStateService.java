@@ -66,6 +66,26 @@ public class VideoStateService implements ProfileChangeListener {
         return null;
     }
 
+    private static final float WATCHED_THRESHOLD = 0.9f;
+    private static final float WATCHED_PERCENT_THRESHOLD = 90f;
+
+    public boolean isVideoWatched(Video video) {
+        if (video == null || video.videoId == null) {
+            return false;
+        }
+        if (video.percentWatched >= WATCHED_PERCENT_THRESHOLD) {
+            return true;
+        }
+        State state = getByVideoId(video.videoId);
+        if (state == null) {
+            return false;
+        }
+        if (state.durationMs > 0) {
+            return state.positionMs >= state.durationMs * WATCHED_THRESHOLD;
+        }
+        return state.video != null && state.video.percentWatched >= WATCHED_PERCENT_THRESHOLD;
+    }
+
     public void removeByVideoId(String videoId) {
         Helpers.removeIf(mStates, state -> Helpers.equals(state.video.videoId, videoId));
         persistState();

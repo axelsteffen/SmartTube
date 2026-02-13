@@ -888,12 +888,22 @@ public final class Video {
     //}
 
     /**
-     * The section playlist intended (as a backup replacement) for cases when regular playlist not available
+     * The section playlist intended (as a backup replacement) for cases when regular playlist not available.
+     * When thematic suggestions are enabled: only use section when context is thematically coherent
+     * (same playlist, same channel) to avoid uncategorized suggestions from mixed-content rows (e.g. Home feed).
      */
     public boolean isSectionPlaylistEnabled(Context context) {
-        return PlayerTweaksData.instance(context).isSectionPlaylistEnabled() && !belongsToSuggestions() && !belongsToPlaybackQueue()
+        boolean baseEnabled = PlayerTweaksData.instance(context).isSectionPlaylistEnabled()
+                && !belongsToSuggestions() && !belongsToPlaybackQueue()
                 && (!checkAllVideosHasPlaylist() || nextMediaItem == null || !isMix()) // skip hidden playlists (music videos usually)
                 && (!isRemote || remotePlaylistId == null);
+        if (!baseEnabled) {
+            return false;
+        }
+        if (!PlayerTweaksData.instance(context).isThematicSuggestionsEnabled()) {
+            return true;
+        }
+        return belongsToSamePlaylistGroup() || belongsToSameAuthorGroup() || belongsToChannelUploads();
     }
 
     public String createPlaylistTitle() {

@@ -28,7 +28,9 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
+import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 import io.reactivex.Observable;
@@ -281,13 +283,48 @@ public class SuggestionsController extends BasePlayerController {
         if (next != null) {
             next.fromQueue = true;
             result = next;
-        } else if (mNextSectionVideo != null) {
+        } else if (mNextSectionVideo != null && !shouldSkipWatched(mNextSectionVideo)) {
             result = mNextSectionVideo;
-        } else if (current != null && current.nextMediaItem != null) {
-            result = Video.from(current.nextMediaItem);
+        } else if (mNextSectionVideo != null) {
+            result = findNextUnwatched(mNextSectionVideo, current);
+        }
+        if (result == null && current != null && current.nextMediaItem != null) {
+            Video nextFromMetadata = Video.from(current.nextMediaItem);
+            result = shouldSkipWatched(nextFromMetadata) ? findNextUnwatched(nextFromMetadata, current) : nextFromMetadata;
         }
 
         return result;
+    }
+
+    private boolean shouldSkipWatched(Video video) {
+        return PlayerTweaksData.instance(getContext()).isHideWatchedFromSuggestionsEnabled()
+                && VideoStateService.instance(getContext()) != null
+                && VideoStateService.instance(getContext()).isVideoWatched(video);
+    }
+
+    private Video findNextUnwatched(Video skipped, Video current) {
+        VideoStateService stateService = VideoStateService.instance(getContext());
+        if (stateService == null) {
+            return skipped;
+        }
+
+        VideoGroup group = current != null ? current.getGroup() : null;
+        if (group != null) {
+            int startIdx = group.indexOf(skipped);
+            if (startIdx < 0) {
+                startIdx = group.indexOf(current);
+            }
+            if (startIdx >= 0) {
+                for (int i = startIdx + 1; i < group.getSize(); i++) {
+                    Video candidate = group.get(i);
+                    if (candidate.hasVideo() && !candidate.isUpcoming && !stateService.isVideoWatched(candidate)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public Video getPrevious() {
@@ -714,18 +751,35 @@ public class SuggestionsController extends BasePlayerController {
 
         List<Video> videos = group.getVideos();
         boolean found = false;
+        Video firstMatch = null;
+        Video sameChannelMatch = null;
+        String currentChannelId = video.channelId;
+        boolean preferThematic = PlayerTweaksData.instance(getContext()).isThematicSuggestionsEnabled();
 
         for (Video current : videos) {
             if (found && current.hasVideo() && !current.isUpcoming) {
-                mNextRetryCount = 0;
-                mNextSectionVideo = current;
-                getPlayer().setNextTitle(mNextSectionVideo);
-                return;
+                if (firstMatch == null) {
+                    firstMatch = current;
+                }
+                if (preferThematic && sameChannelMatch == null && Helpers.equals(current.channelId, currentChannelId)) {
+                    sameChannelMatch = current;
+                }
+                if (!preferThematic || sameChannelMatch != null) {
+                    break;
+                }
             }
 
             if (current.equals(video)) {
                 found = true;
             }
+        }
+
+        mNextSectionVideo = (preferThematic && sameChannelMatch != null) ? sameChannelMatch : firstMatch;
+
+        if (mNextSectionVideo != null) {
+            mNextRetryCount = 0;
+            getPlayer().setNextTitle(mNextSectionVideo);
+            return;
         }
 
         if (mNextRetryCount > 0) {

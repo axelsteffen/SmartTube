@@ -108,6 +108,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     private boolean mIsDontResizeVideoToFitDialogEnabled;
     private boolean mIsSuggestionsHorizontallyScrolled;
     private boolean mIsHideWatchedFromSuggestionsEnabled;
+    private boolean mIsThematicSuggestionsEnabled;
     private final Runnable mPersistDataInt = this::persistDataInt;
 
     private PlayerTweaksData(Context context) {
@@ -681,6 +682,15 @@ public class PlayerTweaksData implements ProfileChangeListener {
         persistData();
     }
 
+    public boolean isThematicSuggestionsEnabled() {
+        return mIsThematicSuggestionsEnabled;
+    }
+
+    public void setThematicSuggestionsEnabled(boolean enable) {
+        mIsThematicSuggestionsEnabled = enable;
+        persistData();
+    }
+
     private void restoreData() {
         String data = mPrefs.getProfileData(VIDEO_PLAYER_TWEAKS_DATA);
 
@@ -751,6 +761,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsQuickSkipShortsAltEnabled = Helpers.parseBoolean(split, 57, false);
         mIsQuickSkipVideosAltEnabled = Helpers.parseBoolean(split, 58, false);
         mIsHideWatchedFromSuggestionsEnabled = Helpers.parseBoolean(split, 59, false);
+        mIsThematicSuggestionsEnabled = Helpers.parseBoolean(split, 60, true);
 
         updateDefaultValues();
     }
@@ -779,7 +790,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
                 mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled,
-                mIsHideWatchedFromSuggestionsEnabled
+                mIsHideWatchedFromSuggestionsEnabled, mIsThematicSuggestionsEnabled
                 ));
     }
 
