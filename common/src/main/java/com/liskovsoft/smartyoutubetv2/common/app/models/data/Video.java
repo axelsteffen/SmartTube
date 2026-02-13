@@ -45,7 +45,10 @@ public final class Video {
     private String metadataTitle;
     private CharSequence metadataSecondTitle;
     public String description;
+    /** Tile content type (e.g. TILE_CONTENT_TYPE_VIDEO). Upstream compatibility. */
     public String category;
+    /** Content topic for thematic classification (e.g. Music, Gaming, News & Politics). */
+    public String contentTopic;
     public int itemType = -1;
     public String channelId;
     public String videoId;
@@ -168,6 +171,7 @@ public final class Video {
         video.id = item.id;
         video.title = item.title;
         video.category = item.category;
+        video.contentTopic = item.contentTopic;
         video.itemType = item.itemType;
         video.secondTitle = item.secondTitle;
         video.videoId = item.videoId;
@@ -437,7 +441,12 @@ public final class Video {
             split = Helpers.appendArray(split, new String[]{null});
         }
 
-        if (split.length != 23) {
+        // contentTopic backward compatibility (added as 24th element)
+        if (split.length == 23) {
+            split = Helpers.appendArray(split, new String[]{null});
+        }
+
+        if (split.length != 24) {
             return null;
         }
 
@@ -466,6 +475,7 @@ public final class Video {
         result.isLive = Helpers.parseBoolean(split[20]);
         result.channelGroupId = Helpers.parseStr(split[21]);
         result.searchQuery = Helpers.parseStr(split[22]);
+        result.contentTopic = Helpers.parseStr(split[23]);
 
         // Reset old type (int)
         if (Helpers.equals(result.channelGroupId, "-1")) {
@@ -480,7 +490,7 @@ public final class Video {
     public String toString() {
         return Helpers.mergeObj(id, category, title, videoId, null, playlistId, channelId, bgImageUrl, cardImageUrl,
                 null, playlistParams, sectionId, getReloadPageKey(), itemType, secondTitle, previewUrl, percentWatched,
-                metadataTitle, metadataSecondTitle, badge, isLive, channelGroupId, searchQuery);
+                metadataTitle, metadataSecondTitle, badge, isLive, channelGroupId, searchQuery, contentTopic);
     }
 
     public boolean hasVideo() {
@@ -752,9 +762,8 @@ public final class Video {
 
         volume = formatInfo.getVolumeLevel();
         isUnplayable = formatInfo.isUnplayable();
-        
-        category = formatInfo.getCategory();
-        
+
+        contentTopic = formatInfo.getCategory();
     }
 
     public void sync(DislikeData dislikeData) {
@@ -795,6 +804,7 @@ public final class Video {
         video.shuffleMediaItem = shuffleMediaItem;
         video.durationMs = durationMs;
         video.category = category;
+        video.contentTopic = contentTopic;
 
         if (getGroup() != null) {
             video.setGroup(getGroup().copy()); // Needed for proper multi row fragments sync (row id == group id)

@@ -756,7 +756,7 @@ public class SuggestionsController extends BasePlayerController {
         Video sameChannelMatch = null;
         Video sameCategoryMatch = null;
         String currentChannelId = video.channelId;
-        String currentCategory = toLower(normalizeCategory(video.category));
+        String currentTopic = toLower(normalizeCategory(video.contentTopic));
         boolean preferThematic = PlayerTweaksData.instance(getContext()).isThematicSuggestionsEnabled();
 
         for (Video current : videos) {
@@ -768,7 +768,7 @@ public class SuggestionsController extends BasePlayerController {
                     sameChannelMatch = current;
                 }
                 if (preferThematic && sameChannelMatch == null && sameCategoryMatch == null
-                        && currentCategory != null && Helpers.equals(toLower(normalizeCategory(current.category)), currentCategory)) {
+                        && currentTopic != null && Helpers.equals(toLower(normalizeCategory(current.contentTopic)), currentTopic)) {
                     sameCategoryMatch = current;
                 }
                 if (!preferThematic) {
@@ -804,7 +804,7 @@ public class SuggestionsController extends BasePlayerController {
     }
 
     /**
-     * Normalizes category string for comparison (e.g. "News+&+Politics" 3 "News & Politics").
+     * Normalizes content topic string for comparison (e.g. "News+&+Politics" → "News & Politics").
      */
     private static String normalizeCategory(String category) {
         if (category == null) return null;
