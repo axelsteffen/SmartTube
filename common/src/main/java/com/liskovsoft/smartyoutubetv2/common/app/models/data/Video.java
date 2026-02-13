@@ -752,6 +752,11 @@ public final class Video {
 
         volume = formatInfo.getVolumeLevel();
         isUnplayable = formatInfo.isUnplayable();
+
+        String newCategory = formatInfo.getCategory();
+        if (newCategory != null && !newCategory.trim().isEmpty()) {
+            category = newCategory;
+        }
     }
 
     public void sync(DislikeData dislikeData) {

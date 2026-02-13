@@ -38,6 +38,7 @@ import io.reactivex.disposables.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class SuggestionsController extends BasePlayerController {
     private static final String TAG = SuggestionsController.class.getSimpleName();
@@ -753,7 +754,9 @@ public class SuggestionsController extends BasePlayerController {
         boolean found = false;
         Video firstMatch = null;
         Video sameChannelMatch = null;
+        Video sameCategoryMatch = null;
         String currentChannelId = video.channelId;
+        String currentCategory = toLower(normalizeCategory(video.category));
         boolean preferThematic = PlayerTweaksData.instance(getContext()).isThematicSuggestionsEnabled();
 
         for (Video current : videos) {
@@ -761,10 +764,19 @@ public class SuggestionsController extends BasePlayerController {
                 if (firstMatch == null) {
                     firstMatch = current;
                 }
-                if (preferThematic && sameChannelMatch == null && Helpers.equals(current.channelId, currentChannelId)) {
+                if (preferThematic && Helpers.equals(current.channelId, currentChannelId)) {
                     sameChannelMatch = current;
                 }
-                if (!preferThematic || sameChannelMatch != null) {
+                if (preferThematic && sameChannelMatch == null && sameCategoryMatch == null
+                        && currentCategory != null && Helpers.equals(toLower(normalizeCategory(current.category)), currentCategory)) {
+                    sameCategoryMatch = current;
+                }
+                if (!preferThematic) {
+                    break; // no thematic preference
+                }
+                // Only break if we already have a channel match and also found a category fallback;
+                // otherwise keep scanning for a potential better candidate later in the list
+                if (sameChannelMatch != null && sameCategoryMatch != null) {
                     break;
                 }
             }
@@ -774,7 +786,8 @@ public class SuggestionsController extends BasePlayerController {
             }
         }
 
-        mNextSectionVideo = (preferThematic && sameChannelMatch != null) ? sameChannelMatch : firstMatch;
+        Video thematicMatch = (preferThematic && sameChannelMatch != null) ? sameChannelMatch : sameCategoryMatch;
+        mNextSectionVideo = thematicMatch != null ? thematicMatch : firstMatch;
 
         if (mNextSectionVideo != null) {
             mNextRetryCount = 0;
@@ -788,6 +801,24 @@ public class SuggestionsController extends BasePlayerController {
             continueGroup(group, continuation -> findNextSectionVideoIfNeeded(video), getPlayer().isSuggestionsShown());
             mNextRetryCount++;
         }
+    }
+
+    /**
+     * Normalizes category string for comparison (e.g. "News+&+Politics" 3 "News & Politics").
+     */
+    private static String normalizeCategory(String category) {
+        if (category == null) return null;
+        String normalized = category
+                .replace('+', ' ')
+                .replace('\u00A0', ' ') // non-breaking space
+                .trim();
+        // collapse multiple spaces
+        normalized = normalized.replaceAll("\\s+", " ");
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String toLower(String s) {
+        return s == null ? null : s.toLowerCase(Locale.US);
     }
 
     private void showChapterDialog(ChapterItem chapter) {
