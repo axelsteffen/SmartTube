@@ -752,11 +752,9 @@ public final class Video {
 
         volume = formatInfo.getVolumeLevel();
         isUnplayable = formatInfo.isUnplayable();
-
-        String newCategory = formatInfo.getCategory();
-        if (newCategory != null && !newCategory.trim().isEmpty()) {
-            category = newCategory;
-        }
+        
+        category = formatInfo.getCategory();
+        
     }
 
     public void sync(DislikeData dislikeData) {
@@ -796,6 +794,7 @@ public final class Video {
         video.nextMediaItem = nextMediaItem;
         video.shuffleMediaItem = shuffleMediaItem;
         video.durationMs = durationMs;
+        video.category = category;
 
         if (getGroup() != null) {
             video.setGroup(getGroup().copy()); // Needed for proper multi row fragments sync (row id == group id)
