@@ -1,0 +1,14 @@
+---
+description: Update CHANGELOG_FORK when making fork-specific changes
+alwaysApply: false
+globs: common/**/*, smarttubetv/**/*, MediaServiceCore/**/*
+---
+
+# Changelog_FORK maintenance
+
+When you add, change, or remove fork-specific code (anything that differs from the original [SmartTube](https://github.com/yuliskov/SmartTube)), update:
+
+1. **CHANGELOG_FORK.md** (root) – add to the relevant subproject section (common, smarttubetv, MediaServiceCore summary)
+2. **MediaServiceCore/CHANGELOG_FORK.md** – when changing files in the MediaServiceCore submodule
+
+Include: file path, brief description of the change, and any new APIs or settings.
