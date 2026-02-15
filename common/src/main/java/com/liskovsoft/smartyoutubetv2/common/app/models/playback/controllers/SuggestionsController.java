@@ -284,17 +284,40 @@ public class SuggestionsController extends BasePlayerController {
         if (next != null) {
             next.fromQueue = true;
             result = next;
-        } else if (mNextSectionVideo != null && !shouldSkipWatched(mNextSectionVideo)) {
-            result = mNextSectionVideo;
-        } else if (mNextSectionVideo != null) {
-            result = findNextUnwatched(mNextSectionVideo, current);
-        }
-        if (result == null && current != null && current.nextMediaItem != null) {
-            Video nextFromMetadata = Video.from(current.nextMediaItem);
-            result = shouldSkipWatched(nextFromMetadata) ? findNextUnwatched(nextFromMetadata, current) : nextFromMetadata;
+        } else {
+            boolean preferNextApi = PlayerTweaksData.instance(getContext()).isPreferNextApiOverSectionEnabled();
+            if (preferNextApi) {
+                result = tryNextFromMetadata(current);
+                if (result == null) {
+                    result = tryNextFromSection(current);
+                }
+            } else {
+                result = tryNextFromSection(current);
+                if (result == null) {
+                    result = tryNextFromMetadata(current);
+                }
+            }
         }
 
         return result;
+    }
+
+    private Video tryNextFromSection(Video current) {
+        if (mNextSectionVideo != null && !shouldSkipWatched(mNextSectionVideo)) {
+            return mNextSectionVideo;
+        }
+        if (mNextSectionVideo != null) {
+            return findNextUnwatched(mNextSectionVideo, current);
+        }
+        return null;
+    }
+
+    private Video tryNextFromMetadata(Video current) {
+        if (current == null || current.nextMediaItem == null) {
+            return null;
+        }
+        Video nextFromMetadata = Video.from(current.nextMediaItem);
+        return shouldSkipWatched(nextFromMetadata) ? findNextUnwatched(nextFromMetadata, current) : nextFromMetadata;
     }
 
     private boolean shouldSkipWatched(Video video) {

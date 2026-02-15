@@ -11,6 +11,18 @@ Dieses Dokument listet alle Änderungen auf, die dieser Fork gegenüber dem Orig
 
 ---
 
+## 2026-02-15
+
+### common – Meilenstein: Next-Video-Quelle (Sektion vs. Next-API)
+
+- **PlayerTweaksData.java**: Neue Einstellung `preferNextApiOverSection` (Index 61, Standard: false)
+- **SuggestionsController.java**: `getNext()` um Einstellung erweitert – Reihenfolge Sektion/Next-API steuerbar via `tryNextFromSection()` / `tryNextFromMetadata()`
+- **GeneralSettingsPresenter.java**: Neue Option in Allgemeinen Einstellungen (bei „Videos ausblenden“)
+- **strings.xml**, **values-de/strings.xml**: String `prefer_next_api_over_section`
+- **Feature:** Einstellung für bevorzugte Quelle des nächsten Videos: Sektionszeile oder Next-API (Allgemeine Einstellungen)
+
+---
+
 ## 2026-02-13
 
 ### common
@@ -48,6 +60,7 @@ Dieses Dokument listet alle Änderungen auf, die dieser Fork gegenüber dem Orig
 |----------|--------------|-------------|
 | Hide watched from Suggestions | Bereits gesehene Videos werden nicht mehr in den Vorschlägen angezeigt | Allgemeine Einstellungen |
 | Prefer thematically relevant suggestions | Vorschläge werden bevorzugt nach thematischer Relevanz (Kategorie/Kanal) sortiert | Allgemeine Einstellungen |
+| Prefer Next-API over section for next video | Nächstes Video aus Next-API statt aus Sektionszeile bevorzugen (wenn keine Playlist) | Allgemeine Einstellungen |
 
 ### Technische Änderungen
 - **contentTopic** (Video): Neues Feld zur thematischen Klassifizierung

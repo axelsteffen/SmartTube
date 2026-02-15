@@ -109,6 +109,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     private boolean mIsSuggestionsHorizontallyScrolled;
     private boolean mIsHideWatchedFromSuggestionsEnabled;
     private boolean mIsThematicSuggestionsEnabled;
+    private boolean mIsPreferNextApiOverSectionEnabled;
     private final Runnable mPersistDataInt = this::persistDataInt;
 
     private PlayerTweaksData(Context context) {
@@ -691,6 +692,15 @@ public class PlayerTweaksData implements ProfileChangeListener {
         persistData();
     }
 
+    public boolean isPreferNextApiOverSectionEnabled() {
+        return mIsPreferNextApiOverSectionEnabled;
+    }
+
+    public void setPreferNextApiOverSectionEnabled(boolean enable) {
+        mIsPreferNextApiOverSectionEnabled = enable;
+        persistData();
+    }
+
     private void restoreData() {
         String data = mPrefs.getProfileData(VIDEO_PLAYER_TWEAKS_DATA);
 
@@ -762,6 +772,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsQuickSkipVideosAltEnabled = Helpers.parseBoolean(split, 58, false);
         mIsHideWatchedFromSuggestionsEnabled = Helpers.parseBoolean(split, 59, false);
         mIsThematicSuggestionsEnabled = Helpers.parseBoolean(split, 60, true);
+        mIsPreferNextApiOverSectionEnabled = Helpers.parseBoolean(split, 61, false);
 
         updateDefaultValues();
     }
@@ -790,7 +801,8 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
                 mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled,
-                mIsHideWatchedFromSuggestionsEnabled, mIsThematicSuggestionsEnabled
+                mIsHideWatchedFromSuggestionsEnabled, mIsThematicSuggestionsEnabled,
+                mIsPreferNextApiOverSectionEnabled
                 ));
     }
 

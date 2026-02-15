@@ -138,6 +138,10 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
                 option -> mPlayerTweaksData.setThematicSuggestionsEnabled(option.isSelected()),
                 mPlayerTweaksData.isThematicSuggestionsEnabled()));
 
+        options.add(UiOptionItem.from(getContext().getString(R.string.prefer_next_api_over_section),
+                option -> mPlayerTweaksData.setPreferNextApiOverSectionEnabled(option.isSelected()),
+                mPlayerTweaksData.isPreferNextApiOverSectionEnabled()));
+
         options.add(UiOptionItem.from(getContext().getString(R.string.hide_shorts),
                 option -> mMediaServiceData.setContentHidden(MediaServiceData.CONTENT_SHORTS_SUBSCRIPTIONS, option.isSelected()),
                 mMediaServiceData.isContentHidden(MediaServiceData.CONTENT_SHORTS_SUBSCRIPTIONS)));
