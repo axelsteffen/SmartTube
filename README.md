@@ -289,7 +289,7 @@ official regulations in your country. Furthermore, we refuse liability
 for any inappropriate use of Invidious, such as illegal downloading.
 This tool is provided to you in the spirit of free, open software.
 
-You may view the LICENSE in which this software is provided to you [here](./LICENSE.md).
+You may view the LICENSE in which this software is provided to you [here](./LICENSE).
 
 >   16. Limitation of Liability.
 >

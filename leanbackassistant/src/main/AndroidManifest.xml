@@ -8,12 +8,8 @@
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
 
     <uses-sdk tools:overrideLibrary="
-        org.xwalk.core,
-        com.algolia.instantsearch.voice,
         androidx.leanback,
         androidx.tvprovider,
-        com.github.rubensousa.previewseekbar,
-        com.github.rubensousa.previewseekbar.exoplayer,
         androidx.recommendation"/>
 
     <uses-feature
