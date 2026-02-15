@@ -1,7 +1,6 @@
 ---
-description: Update CHANGELOG_FORK when making fork-specific changes
-alwaysApply: false
-globs: common/**/*, smarttubetv/**/*, MediaServiceCore/**/*
+description: Update CHANGELOG_FORK when making fork-specific changes; document milestone progress
+alwaysApply: true
 ---
 
 # Changelog_FORK maintenance
@@ -12,3 +11,13 @@ When you add, change, or remove fork-specific code (anything that differs from t
 2. **MediaServiceCore/CHANGELOG_FORK.md** – when changing files in the MediaServiceCore submodule
 
 Include: file path, brief description of the change, and any new APIs or settings.
+
+---
+
+# Milestone progress in the changelog
+
+When implementing a milestone:
+
+1. **Every completed change** is recorded in `CHANGELOG_FORK.md` under `[Unreleased]` in a timely manner.
+2. **Orientation:** The changelog reflects the current state of the milestone – you can always see which steps are done.
+3. **Before the next step:** Check the changelog to know the current state and continue seamlessly.
