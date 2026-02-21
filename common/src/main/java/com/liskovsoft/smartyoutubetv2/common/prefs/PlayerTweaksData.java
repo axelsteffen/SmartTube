@@ -78,6 +78,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     private boolean mIsRealChannelIconEnabled;
     private float mPixelRatio;
     private boolean mIsQualityInfoBitrateEnabled;
+    private boolean mIsAudioTimeStretchingEnabled;
     private boolean mIsSpeedButtonOldBehaviorEnabled;
     private boolean mIsButtonLongClickEnabled;
     private boolean mIsLongSpeedListEnabled;
@@ -383,6 +384,15 @@ public class PlayerTweaksData implements ProfileChangeListener {
 
     public void setQualityInfoBitrateEnabled(boolean enable) {
         mIsQualityInfoBitrateEnabled = enable;
+        persistData();
+    }
+
+    public boolean isAudioTimeStretchingEnabled() {
+        return mIsAudioTimeStretchingEnabled;
+    }
+
+    public void setAudioTimeStretchingEnabled(boolean enable) {
+        mIsAudioTimeStretchingEnabled = enable;
         persistData();
     }
 
@@ -773,6 +783,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsHideWatchedFromSuggestionsEnabled = Helpers.parseBoolean(split, 59, false);
         mIsThematicSuggestionsEnabled = Helpers.parseBoolean(split, 60, true);
         mIsPreferNextApiOverSectionEnabled = Helpers.parseBoolean(split, 61, false);
+        mIsAudioTimeStretchingEnabled = Helpers.parseBoolean(split, 59, true);
 
         updateDefaultValues();
     }
@@ -800,6 +811,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsUnsafeAudioFormatsEnabled, null, mIsLoopShortsEnabled, mIsQuickSkipShortsEnabled, mIsRememberPositionOfLiveVideosEnabled,
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
+                mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled, mIsAudioTimeStretchingEnabled
                 mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled,
                 mIsHideWatchedFromSuggestionsEnabled, mIsThematicSuggestionsEnabled,
                 mIsPreferNextApiOverSectionEnabled

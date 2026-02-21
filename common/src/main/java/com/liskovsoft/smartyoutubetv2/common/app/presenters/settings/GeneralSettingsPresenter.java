@@ -403,6 +403,14 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
                 option -> mGeneralData.setRemapFastForwardToSpeedEnabled(option.isSelected()),
                 mGeneralData.isRemapFastForwardToSpeedEnabled()));
 
+        options.add(UiOptionItem.from("Fast Forward/Rewind -> Speed Toggle",
+                option -> mGeneralData.setRemapFastForwardToSpeedToggleEnabled(option.isSelected()),
+                mGeneralData.isRemapFastForwardToSpeedToggleEnabled()));
+
+        options.add(UiOptionItem.from("S -> Speed Toggle",
+                option -> mGeneralData.setRemapSToSpeedToggleEnabled(option.isSelected()),
+                mGeneralData.isRemapSToSpeedToggleEnabled()));
+
         options.add(UiOptionItem.from("Page Up/Down -> Next/Previous",
                 option -> mGeneralData.setRemapPageUpToNextEnabled(option.isSelected()),
                 mGeneralData.isRemapPageUpToNextEnabled()));
@@ -816,6 +824,7 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
         menuNames.put(MainUIData.MENU_ITEM_OPEN_DESCRIPTION, R.string.action_video_info);
         menuNames.put(MainUIData.MENU_ITEM_OPEN_COMMENTS, R.string.open_comments);
         menuNames.put(MainUIData.MENU_ITEM_OPEN_PLAYLIST, R.string.open_playlist);
+        menuNames.put(MainUIData.MENU_ITEM_BLOCK_CHANNEL, R.string.dialog_block_channel);
 
         for (ContextMenuProvider provider : new ContextMenuManager(getContext()).getProviders()) {
             menuNames.put(provider.getId(), provider.getTitleResId());

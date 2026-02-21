@@ -53,11 +53,11 @@ android {
     
     defaultConfig {
         // values linked with applicationId: searchable.searchSuggestAuthority, searchable.searchSuggestIntentData, VideoContract.CONTENT_AUTHORITY
-        applicationId "org.smarttube"
+        applicationId "app.smarttube"
         minSdkVersion project.properties.minSdkVersion
         targetSdkVersion project.properties.targetSdkVersion
-        versionCode 2276
-        versionName "30.86"
+        versionCode 2279
+        versionName "30.89"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
@@ -120,17 +120,14 @@ android {
     // NOTE: The main goal of prefixing a flavor is to group flavors' folders together
     productFlavors {
         stbeta {
-            // matchingFallbacks = ['lite']
-            applicationIdSuffix ".beta"
+            applicationId "org.smarttube.beta"
         }
         ststable {
-            // matchingFallbacks = ['lite']
-            applicationIdSuffix ".stable"
+            applicationId "org.smarttube.stable"
         }
         stfdroid {
-            // matchingFallbacks = ['lite']
-            applicationIdSuffix ".fdroid"
-            targetSdkVersion project.properties.compileSdkVersion
+            applicationId "app.smarttube.fdroid"
+            targetSdkVersion project.properties.compileSdkVersion + 2
         }
     }
 
