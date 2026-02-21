@@ -3,7 +3,7 @@ package com.google.android.exoplayer2.source.sabr.parser.adapter;
 import com.google.android.exoplayer2.extractor.ExtractorInput;
 import com.google.android.exoplayer2.extractor.PositionHolder;
 import com.google.android.exoplayer2.extractor.mkv.MatroskaExtractor;
-import com.google.android.exoplayer2.source.sabr.parser.core.SabrStream;
+import com.google.android.exoplayer2.source.sabr.parser.SabrStream;
 import com.google.android.exoplayer2.source.sabr.parser.misc.SabrExtractorInput;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
