@@ -47,7 +47,7 @@ public final class Video {
     public String description;
     /** Tile content type (e.g. TILE_CONTENT_TYPE_VIDEO). Upstream compatibility. */
     public String category;
-    /** Content topic for thematic classification (e.g. Music, Gaming, News & Politics). */
+    /** Content topic for thematic classification (e.g., Music, Gaming, News & Politics). */
     public String contentTopic;
     public int itemType = -1;
     public String channelId;
