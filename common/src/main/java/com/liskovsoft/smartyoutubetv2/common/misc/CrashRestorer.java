@@ -42,7 +42,7 @@ public class CrashRestorer {
     }
 
     public void restore() {
-        if (PlaybackPresenter.instance(mContext).getPlayer() == null && mIsPlayerInForeground) {
+        if (mIsPlayerInForeground && PlaybackPresenter.instance(mContext).getPlayer() == null) {
             VideoStateService stateService = VideoStateService.instance(mContext);
             boolean isVideoStateSynced = mSelectedVideo == null || stateService.getByVideoId(mSelectedVideo.videoId) != null;
             State lastState = stateService.getLastState();
