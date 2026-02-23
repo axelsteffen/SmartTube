@@ -1,3 +1,6 @@
+-keepclassmembers class org.slf4j.LoggerFactory {
+    public static org.slf4j.Logger getLogger(java.lang.Class);
+}
 -keepclassmembers class com.bumptech.glide.load.resource.bitmap.VideoDecoder {
     com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool bitmapPool;
 }
