@@ -7,6 +7,8 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -25,21 +27,17 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData;
-import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService;
-import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService.State;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
-import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SplashPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
-import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.CrashRestorer;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.presenter.IconHeaderItemPresenter;
 import com.liskovsoft.smartyoutubetv2.tv.ui.browse.dialog.ErrorDialogFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.headers.ExtendedHeadersSupportFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.misc.ProgressBarManager;
-import com.liskovsoft.smartyoutubetv2.tv.ui.widgets.browse.NavigateTitleView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,20 +48,16 @@ import java.util.Map;
 public class BrowseFragment extends BrowseSupportFragment implements BrowseView {
     private static final String TAG = BrowseFragment.class.getSimpleName();
     private static final String SELECTED_HEADER_INDEX = "SelectedHeaderIndex";
-    private static final String SELECTED_VIDEO = "SelectedVideo";
-    private static final String IS_PLAYER_IN_FOREGROUND = "IsPlayerInForeground";
     private ArrayObjectAdapter mSectionRowAdapter;
     private BrowsePresenter mBrowsePresenter;
     private Map<Integer, BrowseSection> mSections;
     private BrowseSectionFragmentFactory mSectionFragmentFactory;
     private Handler mHandler;
     private ProgressBarManager mProgressBarManager;
-    private NavigateTitleView mTitleView;
     private boolean mIsFragmentCreated;
     private int mSelectedHeaderIndex = -1;
-    private Video mSelectedVideo;
-    private boolean mIsPlayerInForeground;
     private boolean mFocusOnContent;
+    private CrashRestorer mCrashRestorer;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,9 +65,8 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
         if (savedInstanceState != null) {
             mSelectedHeaderIndex = savedInstanceState.getInt(SELECTED_HEADER_INDEX, -1);
-            mSelectedVideo = Video.fromString(savedInstanceState.getString(SELECTED_VIDEO));
-            mIsPlayerInForeground = savedInstanceState.getBoolean(IS_PLAYER_IN_FOREGROUND, false);
         }
+        mCrashRestorer = new CrashRestorer(getContext(), savedInstanceState);
         mIsFragmentCreated = true;
 
         mSections = new HashMap<>();
@@ -90,15 +83,14 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        // Called when the activity is paused
         // Store position in case activity is crashed
-        outState.putInt(SELECTED_HEADER_INDEX, getSelectedPosition());
-        if (mBrowsePresenter.getCurrentVideo() != null) {
-            outState.putString(SELECTED_VIDEO, mBrowsePresenter.getCurrentVideo().toString());
-            outState.putBoolean(IS_PLAYER_IN_FOREGROUND, ViewManager.instance(getContext()).isPlayerInForeground());
-        }
+        int selectedPosition = getSelectedPosition();
+        outState.putInt(SELECTED_HEADER_INDEX, selectedPosition != -1 ? selectedPosition : mSelectedHeaderIndex);
+        mCrashRestorer.persist(outState, mBrowsePresenter.getCurrentVideo());
     }
 
     @Override
@@ -106,7 +98,6 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         View root = super.onCreateView(inflater, container, savedInstanceState);
 
         mProgressBarManager.setRootView((ViewGroup) root);
-        mTitleView = root.findViewById(R.id.browse_title_group);
 
         return root;
     }
@@ -127,15 +118,10 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             mSelectedHeaderIndex = -1;
 
             // Restore state after crash
-            selectSectionItem(mSelectedVideo);
-            if (PlaybackPresenter.instance(getContext()).getPlayer() == null && mIsPlayerInForeground) {
-                VideoStateService stateService = VideoStateService.instance(getContext());
-                boolean isVideoStateSynced = mSelectedVideo == null || stateService.getByVideoId(mSelectedVideo.videoId) != null;
-                State lastState = stateService.getLastState();
-                PlaybackPresenter.instance(getContext()).openVideo(lastState != null && isVideoStateSynced ? lastState.video : mSelectedVideo);
-            }
-            mSelectedVideo = null;
+            selectSectionItem(mCrashRestorer.getSelectedVideo());
         }
+
+        mCrashRestorer.restore();
     }
 
     @Override
