@@ -16,8 +16,9 @@ jobs:
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         operations-per-run: 3000 # This may result in rate limiting, could we reduce and run in batches?
-        days-before-stale: 419 # 1st Jan 2025, as of 24th Feb 2026
+        days-before-stale: 420 # 1st Jan 2025, as of 25th Feb 2026
         days-before-close: 0
+        ignore-updates: true
         stale-issue-message: ''
         close-issue-message: | 
           **Due to a high volume of stale issues, all issues older than January 1st 2025 are being closed automatically.**
