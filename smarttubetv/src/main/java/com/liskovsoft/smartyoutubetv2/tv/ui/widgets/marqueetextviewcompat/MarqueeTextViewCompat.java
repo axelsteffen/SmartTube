@@ -301,6 +301,14 @@ public class MarqueeTextViewCompat extends TextView {
     }
 
     @Override
+    public void setLayoutDirection(int layoutDirection) {
+        super.setLayoutDirection(layoutDirection);
+        if (mTextView != null) {
+            mTextView.setLayoutDirection(layoutDirection);
+        }
+    }
+
+    @Override
     public void setTextDirection(int textDirection) {
         super.setTextDirection(textDirection);
         if (mTextView != null) {

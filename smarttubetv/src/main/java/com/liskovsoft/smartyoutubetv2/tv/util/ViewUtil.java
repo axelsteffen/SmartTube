@@ -103,19 +103,12 @@ public class ViewUtil {
     }
 
     public static void applyMarqueeRtlParams(TextView textView, boolean scroll) {
-        //if (VERSION.SDK_INT <= 17) {
-        //    return;
-        //}
-
-        //if (!BidiFormatter.getInstance().isRtlContext()) {
-        //    return;
-        //}
-
         if (!Helpers.isTextRTL(textView.getText())) {
             // TextView may be reused from rtl context. Do reset.
             // NOTE: don't enable commented options because Setting item's text won't be centered.
             //textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
-            textView.setTextDirection(TextView.TEXT_DIRECTION_FIRST_STRONG);
+            textView.setTextDirection(View.TEXT_DIRECTION_LTR);
+            textView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             //textView.setGravity(Gravity.TOP | Gravity.START);
             return;
         }
@@ -124,7 +117,8 @@ public class ViewUtil {
             // Fix: right scrolling on rtl languages
             // Fix: text disappear on rtl languages
             textView.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_END);
-            textView.setTextDirection(TextView.TEXT_DIRECTION_RTL);
+            textView.setTextDirection(View.TEXT_DIRECTION_RTL);
+            textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
             textView.setGravity(Gravity.START);
         } else {
             // Fix: text disappear on rtl languages
