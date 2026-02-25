@@ -105,6 +105,8 @@ public class AppDialogUtil {
                 UiOptionItem.from(context.getString(R.string.share_link), optionItem -> {
                     if (video.videoId != null) {
                         Utils.displayShareVideoDialog(context, video.videoId, positionSec == -1 ? Utils.toSec(video.getPositionMs()) : positionSec);
+                    } else if (video.playlistId != null) {
+                        Utils.displaySharePlaylistDialog(context, video.playlistId);
                     } else if (video.channelId != null) {
                         Utils.displayShareChannelDialog(context, video.channelId);
                     }

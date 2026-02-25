@@ -120,35 +120,34 @@ public class Utils {
     private static int sCurrentVolume = -1;
     private static final Runnable sForceFinishTheApp = () -> Runtime.getRuntime().exit(0);
 
-    @TargetApi(17)
     public static void displayShareVideoDialog(Context context, String videoId) {
         displayShareVideoDialog(context, videoId, 0);
     }
 
-    @TargetApi(17)
     public static void displayShareVideoDialog(Context context, String videoId, int posSec) {
         Uri videoUrl = convertToFullVideoUrl(videoId, posSec);
         showMultiChooser(context, videoUrl);
     }
 
-    @TargetApi(17)
     public static void displayShareEmbedVideoDialog(Context context, String videoId) {
         displayShareEmbedVideoDialog(context, videoId, 0);
     }
 
-    @TargetApi(17)
     public static void displayShareEmbedVideoDialog(Context context, String videoId, int posSec) {
         Uri videoUrl = convertToEmbedVideoUrl(videoId, posSec);
         showMultiChooser(context, videoUrl);
     }
 
-    @TargetApi(17)
     public static void displayShareChannelDialog(Context context, String channelId) {
         Uri channelUrl = convertToFullChannelUrl(channelId);
         showMultiChooser(context, channelUrl);
     }
 
-    @TargetApi(17)
+    public static void displaySharePlaylistDialog(Context context, String playlistId) {
+        Uri playlistUrl = convertToPlaylistUrl(playlistId);
+        showMultiChooser(context, playlistUrl);
+    }
+
     public static void openUrlInternally(Context context, Uri url) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(url);
@@ -164,7 +163,6 @@ public class Utils {
         }
     }
 
-    @TargetApi(17)
     public static void showMultiChooser(Context context, Uri url) {
         Intent primaryIntent = new Intent(Intent.ACTION_VIEW);
         Intent secondaryIntent = new Intent(Intent.ACTION_SEND);
@@ -200,6 +198,11 @@ public class Utils {
 
     public static Uri convertToFullChannelUrl(String channelId) {
         String url = String.format("https://www.youtube.com/channel/%s", channelId);
+        return Uri.parse(url);
+    }
+
+    public static Uri convertToPlaylistUrl(String playlistId) {
+        String url = String.format("https://www.youtube.com/playlist?list=%s", playlistId);
         return Uri.parse(url);
     }
 
