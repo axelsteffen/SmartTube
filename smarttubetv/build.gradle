@@ -133,7 +133,7 @@ android {
         }
         stfdroid {
             applicationId "app.smarttube.fdroid"
-            targetSdkVersion project.properties.compileSdkVersion + 2
+            targetSdkVersion project.properties.compileSdkVersion
         }
     }
 
@@ -220,6 +220,7 @@ dependencies {
     implementation project(':mediaserviceinterfaces')
     implementation project(':youtubeapi')
     implementation project(':chatkit')
+    implementation project(':doubletapplayerview')
 
     implementation 'io.reactivex.rxjava2:rxandroid:' + rxAndroidVersion
     implementation 'io.reactivex.rxjava2:rxjava:' + rxJavaVersion
