@@ -19,6 +19,7 @@ import com.github.vkay94.dtpv.youtube.views.CircleClipTapView
 import com.github.vkay94.dtpv.youtube.views.SecondsView
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerView
+import androidx.core.content.withStyledAttributes
 
 
 /**
@@ -74,50 +75,57 @@ class YouTubeOverlay(context: Context, private val attrs: AttributeSet?) :
      */
     private fun initializeAttributes() {
         if (attrs != null) {
-            val a = context.obtainStyledAttributes(attrs,
-                R.styleable.YouTubeOverlay, 0, 0)
+            context.withStyledAttributes(
+                attrs,
+                R.styleable.YouTubeOverlay, 0, 0
+            ) {
 
-            // PlayerView => see onAttachToWindow
-            playerViewRef = a.getResourceId(R.styleable.YouTubeOverlay_yt_playerView, -1)
+                // PlayerView => see onAttachToWindow
+                playerViewRef = getResourceId(R.styleable.YouTubeOverlay_yt_playerView, -1)
 
-            // Durations
-            animationDuration = a.getInt(
-                R.styleable.YouTubeOverlay_yt_animationDuration, 650).toLong()
+                // Durations
+                animationDuration = getInt(
+                    R.styleable.YouTubeOverlay_yt_animationDuration, 650
+                ).toLong()
 
-            seekSeconds = a.getInt(
-                R.styleable.YouTubeOverlay_yt_seekSeconds, 10)
+                seekSeconds = getInt(
+                    R.styleable.YouTubeOverlay_yt_seekSeconds, 10
+                )
 
-            iconAnimationDuration = a.getInt(
-                R.styleable.YouTubeOverlay_yt_iconAnimationDuration, 750).toLong()
+                iconAnimationDuration = getInt(
+                    R.styleable.YouTubeOverlay_yt_iconAnimationDuration, 750
+                ).toLong()
 
-            // Arc size
-            arcSize = a.getDimensionPixelSize(
-                R.styleable.YouTubeOverlay_yt_arcSize,
-                context.resources.getDimensionPixelSize(R.dimen.dtpv_yt_arc_size)).toFloat()
+                // Arc size
+                arcSize = getDimensionPixelSize(
+                    R.styleable.YouTubeOverlay_yt_arcSize,
+                    context.resources.getDimensionPixelSize(R.dimen.dtpv_yt_arc_size)
+                ).toFloat()
 
-            // Colors
-            tapCircleColor = a.getColor(
-                R.styleable.YouTubeOverlay_yt_tapCircleColor,
-                ContextCompat.getColor(context, R.color.dtpv_yt_tap_circle_color)
-            )
+                // Colors
+                tapCircleColor = getColor(
+                    R.styleable.YouTubeOverlay_yt_tapCircleColor,
+                    ContextCompat.getColor(context, R.color.dtpv_yt_tap_circle_color)
+                )
 
-            circleBackgroundColor = a.getColor(
-                R.styleable.YouTubeOverlay_yt_backgroundCircleColor,
-                ContextCompat.getColor(context, R.color.dtpv_yt_background_circle_color)
-            )
+                circleBackgroundColor = getColor(
+                    R.styleable.YouTubeOverlay_yt_backgroundCircleColor,
+                    ContextCompat.getColor(context, R.color.dtpv_yt_background_circle_color)
+                )
 
-            // Seconds TextAppearance
-            textAppearance = a.getResourceId(
-                R.styleable.YouTubeOverlay_yt_textAppearance,
-                R.style.YTOSecondsTextAppearance)
+                // Seconds TextAppearance
+                textAppearance = getResourceId(
+                    R.styleable.YouTubeOverlay_yt_textAppearance,
+                    R.style.YTOSecondsTextAppearance
+                )
 
-            // Seconds icon
-            icon = a.getResourceId(
-                R.styleable.YouTubeOverlay_yt_icon,
-                R.drawable.ic_play_triangle
-            )
+                // Seconds icon
+                icon = getResourceId(
+                    R.styleable.YouTubeOverlay_yt_icon,
+                    R.drawable.ic_play_triangle
+                )
 
-            a.recycle()
+            }
 
         } else {
             // Set defaults

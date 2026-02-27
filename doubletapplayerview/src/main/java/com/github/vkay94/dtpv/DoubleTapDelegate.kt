@@ -13,7 +13,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 /**
  * Custom player class for Double-Tapping listening
  */
-open class DoubleTapDelegate(context: Context, val playerView: View) {
+class DoubleTapDelegate(context: Context, playerView: View) {
     private val gestureDetector: GestureDetectorCompat
     private val gestureListener: DoubleTapGestureListener = DoubleTapGestureListener(playerView.rootView)
 
@@ -23,8 +23,6 @@ open class DoubleTapDelegate(context: Context, val playerView: View) {
             gestureListener.controls = value
             field = value
         }
-
-    private var controllerRef: Int = -1
 
     init {
         gestureDetector = GestureDetectorCompat(context, gestureListener)
@@ -85,22 +83,6 @@ open class DoubleTapDelegate(context: Context, val playerView: View) {
             return true
         }
         return false
-    }
-
-    fun onAttachedToWindow() {
-        // If the PlayerView is set by XML then call the corresponding setter method
-        if (controllerRef != -1) {
-            try {
-                val view: View = (playerView.parent as View).findViewById(controllerRef)
-                if (view is PlayerDoubleTapListener) {
-                    controller(view)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("DoubleTapPlayerView",
-                    "controllerRef is either invalid or not PlayerDoubleTapListener: ${e.message}")
-            }
-        }
     }
 
     /**
