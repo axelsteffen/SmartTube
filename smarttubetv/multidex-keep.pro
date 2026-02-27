@@ -1,3 +1,7 @@
+-keepclassmembers class com.liskovsoft.smartyoutubetv2.tv.ui.browse.BrowseActivity {
+    <init>(...);
+    public void onCreate(android.os.Bundle);
+}
 -keepclassmembers class org.slf4j.LoggerFactory {
     public static org.slf4j.Logger getLogger(java.lang.Class);
 }
