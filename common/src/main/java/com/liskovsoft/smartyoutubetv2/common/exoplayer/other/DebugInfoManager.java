@@ -210,8 +210,8 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         appendDeviceNameSDKCache();
         appendMemoryInfo();
         appendWebViewInfo();
-        appendVideoInfoType();
-        appendVideoInfoVersion();
+        appendClientType();
+        appendPlayerVersion();
         appendAccountInfo();
 
         // Schedule next update
@@ -381,22 +381,22 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         appendRow("Pot supported", MediaServiceData.instance().isPotSupported());
     }
 
-    private void appendVideoInfoType() {
+    private void appendClientType() {
         int videoInfoType = MediaServiceData.instance().getVideoInfoType();
-        String infoName = videoInfoType != -1 && videoInfoType < AppClient.values().length ? AppClient.values()[videoInfoType].name() : "default";
+        String clientType = videoInfoType != -1 && videoInfoType < AppClient.values().length ? AppClient.values()[videoInfoType].name() : "default";
 
-        appendRow("Video info type", infoName);
+        appendRow("Client type", clientType);
     }
 
-    private void appendVideoInfoVersion() {
+    private void appendPlayerVersion() {
         AppInfo appInfo = Helpers.firstNonNull(MediaServiceData.instance().getFailedAppInfo(), MediaServiceData.instance().getAppInfo());
         String playerUrl = appInfo != null ? appInfo.getPlayerUrl() : null;
         if (playerUrl != null) {
             String playerVersion = UrlQueryStringFactory.parse(Uri.parse(playerUrl)).get("player");
             String shortPlayerUrl = playerVersion != null ? playerUrl.split(playerVersion)[1] : null;
             boolean isFailed = MediaServiceData.instance().getFailedAppInfo() != null;
-            appendRow("Video info version", isFailed ? Utils.color(playerVersion, Color.RED) : playerVersion);
-            appendRow("Video info url", isFailed ? Utils.color(shortPlayerUrl, Color.RED) : shortPlayerUrl);
+            appendRow("Player version", isFailed ? Utils.color(playerVersion, Color.RED) : playerVersion);
+            appendRow("Player url", isFailed ? Utils.color(shortPlayerUrl, Color.RED) : shortPlayerUrl);
         }
     }
 
