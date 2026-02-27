@@ -74,7 +74,7 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
         appendBootToSection(settingsPresenter);
         appendEnabledSections(settingsPresenter);
         appendContextMenuItemsCategory(settingsPresenter);
-        appendHideVideos(settingsPresenter);
+        appendHideContent(settingsPresenter);
         appendAppExitCategory(settingsPresenter);
         appendBackgroundPlaybackCategory(settingsPresenter);
         appendScreenDimmingCategory(settingsPresenter);
@@ -107,7 +107,7 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
         settingsPresenter.appendCheckedCategory(getContext().getString(R.string.side_panel_sections), options);
     }
 
-    private void appendHideVideos(AppDialogPresenter settingsPresenter) {
+    private void appendHideContent(AppDialogPresenter settingsPresenter) {
         List<OptionItem> options = new ArrayList<>();
 
         options.add(UiOptionItem.from(getContext().getString(R.string.hide_mixes),
