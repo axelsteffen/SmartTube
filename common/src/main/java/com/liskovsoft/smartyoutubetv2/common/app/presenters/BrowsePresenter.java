@@ -39,6 +39,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.AppDataSourceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.SidebarSectionRegistry;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.AccountChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AccountsData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.BlockedChannelData;
@@ -210,6 +211,8 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
         if (getSidebarService().isSettingsSectionEnabled()) {
             mSectionsMapping.put(MediaGroup.TYPE_SETTINGS, new BrowseSection(MediaGroup.TYPE_SETTINGS, getContext().getString(R.string.header_settings), BrowseSection.TYPE_SETTINGS_GRID, R.drawable.icon_settings));
         }
+
+        SidebarSectionRegistry.registerSectionMappings(mSectionsMapping, getContext());
     }
 
     private void initRowAndGridMapping() {
@@ -250,6 +253,8 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
                 }
             }
         }
+
+        SidebarSectionRegistry.appendExtraSections(mSections, getContext());
     }
 
     private void initPinnedCallbacks() {

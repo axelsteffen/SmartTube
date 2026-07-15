@@ -10,6 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -19,6 +20,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### common
 - **common/src/main/java/.../misc/MediaSourceRegistry.java** (new): Fork-only registry for media sources (`YOUTUBE`, `PLEX`). Central `getServiceManager()` accessor; Plex disabled until Phase 1.
 - **common/** (24 files): Replaced direct `YouTubeServiceManager.instance()` with `MediaSourceRegistry.getServiceManager()` in presenters, playback controllers, and misc services.
+- **common/.../misc/SidebarSectionRegistry.java** (new): Fork-only sidebar extension point for extra sections (id ≥ 100).
+- **common/.../errors/PlexDisabledError.java** (new): Placeholder content for disabled Plex sidebar section.
+- **common/.../presenters/BrowsePresenter.java**: Hooks into `SidebarSectionRegistry` for extra sections.
+- **common/src/main/res/values/strings.xml**: `header_plex`, `plex_not_available` strings.
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.

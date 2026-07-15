@@ -130,8 +130,8 @@ SmartTube/                          (Fork)
 | 0 | 0.1 Milestone doc | done |
 | 0 | 0.2 MediaSourceRegistry | done |
 | 0 | 0.3 Service registry | done |
-| 0 | 0.4 Sidebar extension | open |
-| 0 | 0.5 Upstream merge verify | open |
+| 0 | 0.4 Sidebar extension | done |
+| 0 | 0.5 Upstream merge verify | done |
 | 1 | 1.1–1.7 Plex API PoC | open |
 | 2 | 2.1–2.5 Adapters | open |
 | 3 | 3.1–3.5 Browse UI | open |
