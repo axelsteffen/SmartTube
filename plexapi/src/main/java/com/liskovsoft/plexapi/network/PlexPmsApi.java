@@ -25,17 +25,21 @@ public interface PlexPmsApi {
     Call<MediaContainerResponse> getServerInfo();
 
     @GET("library/sections")
-    Call<MediaContainerResponse> getLibrarySections();
+    Call<MediaContainerResponse> getLibrarySections(
+            @Header(PlexHeaders.TOKEN) String token);
 
     @GET("library/sections/{sectionId}/all")
     Call<MediaContainerResponse> getSectionItems(
             @Path("sectionId") String sectionId,
             @Query("type") Integer type,
             @Header(PlexHeaders.CONTAINER_START) Integer containerStart,
-            @Header(PlexHeaders.CONTAINER_SIZE) Integer containerSize);
+            @Header(PlexHeaders.CONTAINER_SIZE) Integer containerSize,
+            @Header(PlexHeaders.TOKEN) String token);
 
     @GET("library/metadata/{ids}")
-    Call<MediaContainerResponse> getMetadata(@Path("ids") String ids);
+    Call<MediaContainerResponse> getMetadata(
+            @Path("ids") String ids,
+            @Header(PlexHeaders.TOKEN) String token);
 
     /**
      * Playback decision. Official template uses {@code /{transcodeType}/:/transcode/universal/decision};
