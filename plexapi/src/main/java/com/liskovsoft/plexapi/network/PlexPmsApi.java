@@ -52,5 +52,6 @@ public interface PlexPmsApi {
             @Query("directStream") Integer directStream,
             @Query("protocol") String protocol,
             @Query("mediaIndex") Integer mediaIndex,
-            @Query("partIndex") Integer partIndex);
+            @Query("partIndex") Integer partIndex,
+            @Header(PlexHeaders.TOKEN) String token);
 }

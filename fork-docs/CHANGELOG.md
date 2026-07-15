@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.5 done (modules + PIN auth + server discovery + library/movie list). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done (modules + PIN auth + server discovery + library/movie list + stream URL). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -40,8 +40,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../service/PlexServerServiceImpl.java**: Server discovery via plex.tv `/api/v2/resources` (Phase 1.4); selects connection (local HTTPS preferred); persists selection in `PlexPrefs`.
 - **plexapi/.../server/PlexServerImpl.java**: Maps `PlexResource` → `PlexServer` (incl. per-server `accessToken`).
 - **plexapi/.../service/PlexLibraryServiceImpl.java**: Lists sections + first page of movies via PMS (`type=1`, page size 50) using selected server + accessToken (Phase 1.5).
+- **plexapi/.../service/PlexMediaServiceImpl.java**: Resolves stream URL — Direct Play from metadata `Part.key`, HLS decision fallback (Phase 1.6).
+- **plexapi/.../media/PlexStreamInfoImpl.java**: Immutable stream info + MIME hints for ExoPlayer.
 - **plexapi/.../library/PlexLibraryImpl.java**, **PlexMediaItemImpl.java**: Maps PMS Directory/Metadata; absolute thumb URLs via `PlexUrlHelper`.
-- **plexapi/.../network/PlexPmsApi.java**: Explicit `X-Plex-Token` header on library/metadata calls.
+- **plexapi/.../network/PlexPmsApi.java**: Explicit `X-Plex-Token` on library/metadata/decision calls.
+- **plexapi/src/test/.../PlexMediaServiceImplTest.java**: MockWebServer unit tests for Direct Play + decision fallback (Phase 1.7).
 - **plexapi/openapi-plex-pms-in-use.yaml** (new): Scoped OpenAPI (PMS 1.2.2 + plex.tv) for PoC endpoints — identity, sections, section items, metadata, parts, playback decision, resources.
 - **plexapi/.../network/PlexPmsApi.java**, **PlexTvResourcesApi.java**: Retrofit contracts for PMS + server discovery.
 - **plexapi/.../network/dto/**: Gson DTOs (`MediaContainer`, `PlexDirectory`, `PlexMetadata`, `PlexMedia`, `PlexPart`, `PlexResource`).
