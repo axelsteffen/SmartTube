@@ -15,7 +15,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.BufferingDetector.OnLongBuffer
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 
 import java.util.List;
 
@@ -119,7 +119,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
         if (Helpers.startsWithAny(errorContent, "Unable to connect to")) {
             // No internet connection or WRONG DATE on the device
             // Recently this message starting to show for other reasons
-            //YouTubeServiceManager.instance().applyNoPlaybackFix(); // ?
+            //MediaSourceRegistry.getServiceManager().applyNoPlaybackFix(); // ?
             //switchNextEngine(); // ?
             //restartEngine = false;
             if (!getPlayerTweaksData().isNetworkErrorFixingDisabled()) {
@@ -157,13 +157,13 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             // "Unexpected ArrayIndexOutOfBoundsException", "Unexpected IndexOutOfBoundsException"
 
             //if (Helpers.startsWithAny(errorContent, "Response code: 403")) {
-            //    YouTubeServiceManager.instance().applyNoPlaybackFix();
+            //    MediaSourceRegistry.getServiceManager().applyNoPlaybackFix();
             //} else if (isSubtitlesEnabled()) {
             //    disableSubtitles(); // Response code: 429
             //} else if (getPlayerTweaksData().isHighBitrateFormatsEnabled()) {
             //    getPlayerTweaksData().setHighBitrateFormatsEnabled(false); // Response code: 429
             //} else {
-            //    YouTubeServiceManager.instance().applyNoPlaybackFix(); // Response code: 403
+            //    MediaSourceRegistry.getServiceManager().applyNoPlaybackFix(); // Response code: 403
             //}
 
             boolean isGeneralError = Helpers.startsWithAny(errorContent, "Response code: 429", "Response code: 500");
@@ -172,7 +172,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             } else if (isGeneralError && getPlayerTweaksData().isHighBitrateFormatsEnabled()) {
                 getPlayerTweaksData().setHighBitrateFormatsEnabled(false); // Response code: 429
             } else {
-                YouTubeServiceManager.instance().applyNoPlaybackFix(); // Response code: 403
+                MediaSourceRegistry.getServiceManager().applyNoPlaybackFix(); // Response code: 403
             }
 
             restartEngine = false;
@@ -287,10 +287,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
         if (Helpers.containsAny(message, "Unexpected token", "Syntax error", "invalid argument") || // temporal fix
                 Helpers.equalsAny(className, "PoTokenException", "BadWebViewException")) {
-            YouTubeServiceManager.instance().applyNoPlaybackFix();
+            MediaSourceRegistry.getServiceManager().applyNoPlaybackFix();
             mVideoLoaderController.reloadVideo();
         } else if (Helpers.containsAny(message, "is not defined")) {
-            YouTubeServiceManager.instance().invalidateCache();
+            MediaSourceRegistry.getServiceManager().invalidateCache();
             mVideoLoaderController.reloadVideo();
         } else {
             Log.e(TAG, "Probably no internet connection");

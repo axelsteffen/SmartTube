@@ -128,8 +128,8 @@ SmartTube/                          (Fork)
 | Phase | Step | Status |
 |-------|------|--------|
 | 0 | 0.1 Milestone doc | done |
-| 0 | 0.2 MediaSourceRegistry | open |
-| 0 | 0.3 Service registry | open |
+| 0 | 0.2 MediaSourceRegistry | done |
+| 0 | 0.3 Service registry | done |
 | 0 | 0.4 Sidebar extension | open |
 | 0 | 0.5 Upstream merge verify | open |
 | 1 | 1.1–1.7 Plex API PoC | open |

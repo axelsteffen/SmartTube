@@ -32,7 +32,7 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.RemoteControlData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.SearchData;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 
 public abstract class BasePlayerController implements PlayerEventListener {
@@ -330,23 +330,23 @@ public abstract class BasePlayerController implements PlayerEventListener {
     }
 
     protected CommentsService getCommentsService() {
-        return YouTubeServiceManager.instance().getCommentsService();
+        return MediaSourceRegistry.getServiceManager().getCommentsService();
     }
 
     protected ContentService getContentService() {
-        return YouTubeServiceManager.instance().getContentService();
+        return MediaSourceRegistry.getServiceManager().getContentService();
     }
 
     protected SignInService getSignInService() {
-        return YouTubeServiceManager.instance().getSignInService();
+        return MediaSourceRegistry.getServiceManager().getSignInService();
     }
 
     protected NotificationsService getNotificationsService() {
-        return YouTubeServiceManager.instance().getNotificationsService();
+        return MediaSourceRegistry.getServiceManager().getNotificationsService();
     }
 
     protected MediaItemService getMediaItemService() {
-        return YouTubeServiceManager.instance().getMediaItemService();
+        return MediaSourceRegistry.getServiceManager().getMediaItemService();
     }
 
     protected SearchPresenter getSearchPresenter() {

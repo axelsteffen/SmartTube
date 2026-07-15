@@ -7,7 +7,7 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.base.BasePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.AddDeviceView;
 import com.liskovsoft.sharedutils.rx.RxHelper;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 import io.reactivex.disposables.Disposable;
 
 public class AddDevicePresenter extends BasePresenter<AddDeviceView> {
@@ -19,7 +19,7 @@ public class AddDevicePresenter extends BasePresenter<AddDeviceView> {
 
     private AddDevicePresenter(Context context) {
         super(context);
-        mService = YouTubeServiceManager.instance();
+        mService = MediaSourceRegistry.getServiceManager();
     }
 
     public static AddDevicePresenter instance(Context context) {

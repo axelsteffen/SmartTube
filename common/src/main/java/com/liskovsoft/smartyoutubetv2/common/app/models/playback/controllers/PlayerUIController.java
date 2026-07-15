@@ -40,7 +40,7 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.SearchData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 import com.liskovsoft.youtubeapi.service.YouTubeSignInService;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -88,7 +88,7 @@ public class PlayerUIController extends BasePlayerController {
     public PlayerUIController() {
         mHandler = new Handler(Looper.getMainLooper());
 
-        ServiceManager service = YouTubeServiceManager.instance();
+        ServiceManager service = MediaSourceRegistry.getServiceManager();
         mMediaItemService = service.getMediaItemService();
     }
 
@@ -838,7 +838,7 @@ public class PlayerUIController extends BasePlayerController {
         String videoId = getVideo().videoId;
         mPlaylistInfos = null;
         Disposable playlistsInfoAction =
-                YouTubeServiceManager.instance().getMediaItemService().getPlaylistsInfoObserve(videoId)
+                MediaSourceRegistry.getServiceManager().getMediaItemService().getPlaylistsInfoObserve(videoId)
                         .subscribe(
                                 videoPlaylistInfos -> {
                                     mPlaylistInfos = videoPlaylistInfos;
