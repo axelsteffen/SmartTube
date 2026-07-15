@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.2 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.3 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -43,9 +43,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../service/PlexMediaServiceImpl.java**: Resolves stream URL — Direct Play from metadata `Part.key`, HLS decision fallback (Phase 1.6).
 - **plexapi/.../adapter/PlexMediaItemAdapter.java** (new): Wraps `PlexMediaItem` as MSC `MediaItem` (`videoId` = `ratingKey`); enables `Video.from(MediaItem)` (Phase 2.1).
 - **plexapi/.../adapter/PlexMediaGroupAdapter.java** (new): Wraps `PlexLibrary` + movie page as MSC `MediaGroup` (`TYPE_MOVIES`, `params` = library key); enables `VideoGroup.from(MediaGroup)` (Phase 2.2).
+- **plexapi/.../adapter/PlexMediaItemFormatInfo.java** (new): Maps `PlexStreamInfo` + item metadata to MSC `MediaItemFormatInfo` — Direct Play → UrlFormats; transcoded HLS → `getHlsManifestUrl()` (Phase 2.3; VOD HLS routing in 2.5).
+- **plexapi/.../adapter/PlexMediaFormat.java** (new): Minimal `MediaFormat` (`FORMAT_TYPE_REGULAR`) for progressive Direct Play URLs.
 - **plexapi/build.gradle**: Depends on `mediaserviceinterfaces` for the adapters.
 - **plexapi/src/test/.../PlexMediaItemAdapterTest.java**: Mapping + equality unit tests (Phase 2.1).
 - **plexapi/src/test/.../PlexMediaGroupAdapterTest.java**: Title/items/empty/null-safe unit tests (Phase 2.2).
+- **plexapi/src/test/.../PlexMediaItemFormatInfoTest.java**: Direct Play UrlFormats + HLS manifest mapping unit tests (Phase 2.3).
 - **plexapi/.../media/PlexStreamInfoImpl.java**: Immutable stream info + MIME hints for ExoPlayer.
 - **plexapi/.../library/PlexLibraryImpl.java**, **PlexMediaItemImpl.java**: Maps PMS Directory/Metadata; absolute thumb URLs via `PlexUrlHelper`.
 - **plexapi/.../network/PlexPmsApi.java**: Explicit `X-Plex-Token` on library/metadata/decision calls.
