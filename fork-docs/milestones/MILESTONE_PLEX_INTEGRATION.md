@@ -139,7 +139,8 @@ SmartTube/                          (Fork)
 | 1 | 1.5 Library movie list | done |
 | 1 | 1.6 Stream URL resolve | done |
 | 1 | 1.7 Stream unit test (MockWebServer) | done |
-| 2 | 2.1–2.5 Adapters | open |
+| 2 | 2.1 PlexMediaItem → MediaItem adapter | done |
+| 2 | 2.2–2.5 Adapters (group, format, Video.source, routing) | open |
 | 3 | 3.1–3.5 Browse UI | open |
 | 4 | 4.1–4.6 Playback polish | open |
 | 5 | 5.1–5.4 Hardening | open |
