@@ -164,10 +164,16 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
             return null;
         }
 
-        Observable<MediaGroup> plexGroup = PlexBrowsePresenter.getChildrenGroupObserve(item);
+        Observable<MediaGroup> plexGroup = PlexBrowsePresenter.getLibraryGridObserve(item);
         if (plexGroup != null) {
             disposeActions();
             return plexGroup;
+        }
+
+        Observable<MediaGroup> plexChildrenGroup = PlexBrowsePresenter.getChildrenGroupObserve(item);
+        if (plexChildrenGroup != null) {
+            disposeActions();
+            return plexChildrenGroup;
         }
 
         if (item.mediaItem == null) {
@@ -219,11 +225,20 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
 
         Observable<MediaGroup> continuation;
 
-        continuation = getContentService().continueGroupObserve(mediaGroup);
+        continuation = PlexBrowsePresenter.continueGroupObserve(mediaGroup);
+        if (continuation == null) {
+            continuation = getContentService().continueGroupObserve(mediaGroup);
+        }
 
         mScrollAction = continuation
                 .subscribe(
                         continueMediaGroup -> {
+                            if (continueMediaGroup == null) {
+                                if (getView() != null) {
+                                    getView().showProgressBar(false);
+                                }
+                                return;
+                            }
                             VideoGroup newGroup = VideoGroup.from(group, continueMediaGroup);
                             getView().update(newGroup);
                             mBrowseProcessor.process(newGroup);

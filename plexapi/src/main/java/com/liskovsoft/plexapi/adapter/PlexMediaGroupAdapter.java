@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
+import com.liskovsoft.plexapi.library.PlexPage;
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
@@ -14,20 +15,25 @@ import java.util.List;
  * Fork-only adapter: wraps a Plex library movie page as MSC {@link MediaGroup}
  * so existing UI ({@code VideoGroup.from(MediaGroup)}) can consume it.
  * <p>
- * Items are adapted via {@link PlexMediaItemAdapter}. Pagination keys are unused
- * for the first-page PoC (library key is exposed via {@link #getParams()}).
+ * Items are adapted via {@link PlexMediaItemAdapter}. Pagination uses
+ * {@link #getNextPageKey()} as the next PMS offset (string).
  */
 public final class PlexMediaGroupAdapter implements MediaGroup {
+    private static final String TYPE_LIBRARY_STUB = "library";
+
     private final PlexLibrary mLibrary;
     private final PlexMediaItem mContainer;
     private final List<MediaItem> mMediaItems;
+    private final String mNextPageKey;
 
     private PlexMediaGroupAdapter(@Nullable PlexLibrary library,
                                   @Nullable PlexMediaItem container,
-                                  List<MediaItem> mediaItems) {
+                                  List<MediaItem> mediaItems,
+                                  @Nullable String nextPageKey) {
         mLibrary = library;
         mContainer = container;
         mMediaItems = mediaItems;
+        mNextPageKey = nextPageKey;
     }
 
     /**
@@ -36,23 +42,45 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
     @Nullable
     public static PlexMediaGroupAdapter from(@Nullable PlexLibrary library,
                                              @Nullable List<PlexMediaItem> items) {
+        return from(library, items, null);
+    }
+
+    @Nullable
+    public static PlexMediaGroupAdapter from(@Nullable PlexLibrary library,
+                                             @Nullable List<PlexMediaItem> items,
+                                             @Nullable PlexPage page) {
         if (library == null || library.getKey() == null || library.getKey().isEmpty()) {
             return null;
         }
 
         ArrayList<MediaItem> mediaItems = new ArrayList<>();
-        if (items != null) {
-            for (PlexMediaItem item : items) {
-                MediaItem adapted = PlexMediaItemAdapter.from(item);
-                if (adapted != null) {
-                    mediaItems.add(adapted);
-                }
-            }
+        MediaItem browseStub = PlexMediaItemAdapter.fromLibraryBrowse(library);
+        if (browseStub != null) {
+            mediaItems.add(browseStub);
         }
 
-        // Match YouTubeMediaGroup: null when empty (avoids duplicate-append quirks)
+        appendItems(mediaItems, items);
+
         List<MediaItem> result = mediaItems.isEmpty() ? null : mediaItems;
-        return new PlexMediaGroupAdapter(library, null, result);
+        return new PlexMediaGroupAdapter(library, null, result, nextPageKeyFrom(page));
+    }
+
+    /**
+     * Full-library grid (Phase 3.4): same items as a row but without the browse stub.
+     */
+    @Nullable
+    public static PlexMediaGroupAdapter fromLibraryGrid(@Nullable PlexLibrary library,
+                                                        @Nullable List<PlexMediaItem> items,
+                                                        @Nullable PlexPage page) {
+        if (library == null || library.getKey() == null || library.getKey().isEmpty()) {
+            return null;
+        }
+
+        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        appendItems(mediaItems, items);
+
+        List<MediaItem> result = mediaItems.isEmpty() ? null : mediaItems;
+        return new PlexMediaGroupAdapter(library, null, result, nextPageKeyFrom(page));
     }
 
     /**
@@ -61,22 +89,47 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
     @Nullable
     public static PlexMediaGroupAdapter fromContainer(@Nullable PlexMediaItem container,
                                                       @Nullable List<PlexMediaItem> items) {
+        return fromContainer(container, items, null);
+    }
+
+    @Nullable
+    public static PlexMediaGroupAdapter fromContainer(@Nullable PlexMediaItem container,
+                                                      @Nullable List<PlexMediaItem> items,
+                                                      @Nullable PlexPage page) {
         if (container == null || container.getRatingKey() == null || container.getRatingKey().isEmpty()) {
             return null;
         }
 
         ArrayList<MediaItem> mediaItems = new ArrayList<>();
-        if (items != null) {
-            for (PlexMediaItem item : items) {
-                MediaItem adapted = PlexMediaItemAdapter.from(item);
-                if (adapted != null) {
-                    mediaItems.add(adapted);
-                }
-            }
-        }
+        appendItems(mediaItems, items);
 
         List<MediaItem> result = mediaItems.isEmpty() ? null : mediaItems;
-        return new PlexMediaGroupAdapter(null, container, result);
+        return new PlexMediaGroupAdapter(null, container, result, nextPageKeyFrom(page));
+    }
+
+    /**
+     * Continuation page: new items only, with updated {@link #getNextPageKey()}.
+     */
+    @Nullable
+    public static PlexMediaGroupAdapter continueFrom(@Nullable PlexMediaGroupAdapter base,
+                                                     @Nullable List<PlexMediaItem> items,
+                                                     @Nullable PlexPage page) {
+        if (base == null) {
+            return null;
+        }
+
+        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        appendItems(mediaItems, items);
+
+        if (mediaItems.isEmpty()) {
+            return null;
+        }
+
+        return new PlexMediaGroupAdapter(
+                base.mLibrary,
+                base.mContainer,
+                mediaItems,
+                nextPageKeyFrom(page));
     }
 
     /** Underlying Plex library (section key for later pagination / drill-down). */
@@ -88,6 +141,14 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
     @Nullable
     public PlexMediaItem getPlexContainer() {
         return mContainer;
+    }
+
+    public boolean isLibraryGroup() {
+        return mLibrary != null;
+    }
+
+    public boolean isContainerGroup() {
+        return mContainer != null;
     }
 
     @Override
@@ -130,7 +191,7 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
 
     @Override
     public String getNextPageKey() {
-        return null;
+        return mNextPageKey;
     }
 
     @Override
@@ -141,5 +202,29 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
     @Override
     public boolean isEmpty() {
         return mMediaItems == null || mMediaItems.isEmpty();
+    }
+
+    @Nullable
+    private static String nextPageKeyFrom(@Nullable PlexPage page) {
+        if (page == null) {
+            return null;
+        }
+        int nextOffset = page.getNextOffset();
+        return nextOffset >= 0 ? String.valueOf(nextOffset) : null;
+    }
+
+    private static void appendItems(ArrayList<MediaItem> mediaItems, @Nullable List<PlexMediaItem> items) {
+        if (items == null) {
+            return;
+        }
+        for (PlexMediaItem item : items) {
+            if (TYPE_LIBRARY_STUB.equalsIgnoreCase(item.getType())) {
+                continue;
+            }
+            MediaItem adapted = PlexMediaItemAdapter.from(item);
+            if (adapted != null) {
+                mediaItems.add(adapted);
+            }
+        }
     }
 }

@@ -5,9 +5,12 @@ import androidx.annotation.Nullable;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.plexapi.PlexServiceManager;
 import com.liskovsoft.plexapi.adapter.PlexMediaGroupAdapter;
+import com.liskovsoft.plexapi.library.PlexLibraryImpl;
+import com.liskovsoft.plexapi.library.PlexPage;
 import com.liskovsoft.plexserviceinterfaces.PlexLibraryService;
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
+import com.liskovsoft.plexserviceinterfaces.data.PlexMediaPage;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
@@ -19,9 +22,9 @@ import java.util.List;
 import io.reactivex.Observable;
 
 /**
- * Fork-only: loads Plex movie/show libraries as browse rows and resolves
- * show/season drill-down for the existing {@link BrowsePresenter} pipeline
- * (Phase 3.2 / 3.3). Not a view presenter.
+ * Fork-only: loads Plex movie/show libraries as browse rows, resolves
+ * show/season drill-down, library grids, and row/grid pagination
+ * for the existing {@link BrowsePresenter} pipeline (Phase 3.2–3.4).
  */
 public final class PlexBrowsePresenter {
     private static final String TAG = PlexBrowsePresenter.class.getSimpleName();
@@ -29,6 +32,10 @@ public final class PlexBrowsePresenter {
     private static final String TYPE_SHOW = "show";
 
     private PlexBrowsePresenter() {
+    }
+
+    public static boolean isPlexGroup(@Nullable MediaGroup group) {
+        return group instanceof PlexMediaGroupAdapter;
     }
 
     /**
@@ -50,6 +57,28 @@ public final class PlexBrowsePresenter {
         return RxHelper.fromCallable(() -> fetchChildrenGroup(video));
     }
 
+    /**
+     * Full paginated library grid from a browse stub ({@link Video#getReloadPageKey()}).
+     */
+    @Nullable
+    public static Observable<MediaGroup> getLibraryGridObserve(@Nullable Video video) {
+        if (video == null || !video.isPlex() || !video.hasReloadPageKey()) {
+            return null;
+        }
+        return RxHelper.fromCallable(() -> fetchLibraryGrid(video));
+    }
+
+    /**
+     * Next page for a Plex row or grid ({@link BrowsePresenter} / {@link ChannelUploadsPresenter}).
+     */
+    @Nullable
+    public static Observable<MediaGroup> continueGroupObserve(@Nullable MediaGroup group) {
+        if (!(group instanceof PlexMediaGroupAdapter)) {
+            return null;
+        }
+        return RxHelper.fromCallable(() -> fetchContinueGroup((PlexMediaGroupAdapter) group));
+    }
+
     private static List<MediaGroup> fetchLibraryRows() {
         PlexLibraryService libraryService = PlexServiceManager.instance().getLibraryService();
 
@@ -62,12 +91,12 @@ public final class PlexBrowsePresenter {
         }
 
         for (PlexLibrary library : libraries) {
-            List<PlexMediaItem> items = fetchFirstPage(libraryService, library);
-            if (items == null || items.isEmpty()) {
+            PlexPage page = fetchLibraryPage(libraryService, library, 0);
+            if (page == null || page.getItems().isEmpty()) {
                 continue;
             }
 
-            MediaGroup group = PlexMediaGroupAdapter.from(library, items);
+            MediaGroup group = PlexMediaGroupAdapter.from(library, page.getItems(), page);
             if (group != null && !group.isEmpty()) {
                 rows.add(group);
             }
@@ -78,29 +107,104 @@ public final class PlexBrowsePresenter {
     }
 
     @Nullable
-    private static List<PlexMediaItem> fetchFirstPage(PlexLibraryService libraryService, PlexLibrary library) {
-        if (isMovieLibrary(library)) {
-            return libraryService.getMoviesObserve(library).blockingFirst();
-        }
-        if (isShowLibrary(library)) {
-            return libraryService.getShowsObserve(library).blockingFirst();
-        }
-        return null;
-    }
-
-    @Nullable
     private static MediaGroup fetchChildrenGroup(Video video) {
         PlexMediaItem parent = PlexPlaybackHelper.resolvePlexMediaItem(video);
         if (parent == null) {
             return null;
         }
 
-        List<PlexMediaItem> children = PlexServiceManager.instance()
+        PlexPage page = toPlexPage(PlexServiceManager.instance()
                 .getLibraryService()
-                .getChildrenObserve(parent)
-                .blockingFirst();
+                .getChildrenPageObserve(parent, 0)
+                .blockingFirst());
 
-        return PlexMediaGroupAdapter.fromContainer(parent, children);
+        return PlexMediaGroupAdapter.fromContainer(parent, page.getItems(), page);
+    }
+
+    @Nullable
+    private static MediaGroup fetchLibraryGrid(Video video) {
+        String libraryKey = video.getReloadPageKey();
+        if (libraryKey == null || libraryKey.isEmpty()) {
+            return null;
+        }
+
+        String libraryType = video.playlistParams != null ? video.playlistParams : TYPE_MOVIE;
+        String title = video.title != null ? video.title : libraryKey;
+        PlexLibrary library = new PlexLibraryImpl(libraryKey, title, libraryType);
+
+        PlexPage page = fetchLibraryPage(PlexServiceManager.instance().getLibraryService(), library, 0);
+        if (page == null || page.getItems().isEmpty()) {
+            return null;
+        }
+
+        return PlexMediaGroupAdapter.fromLibraryGrid(library, page.getItems(), page);
+    }
+
+    @Nullable
+    private static MediaGroup fetchContinueGroup(PlexMediaGroupAdapter group) {
+        String nextPageKey = group.getNextPageKey();
+        if (nextPageKey == null || nextPageKey.isEmpty()) {
+            return null;
+        }
+
+        int offset = parseOffset(nextPageKey);
+        if (offset < 0) {
+            return null;
+        }
+
+        PlexLibraryService libraryService = PlexServiceManager.instance().getLibraryService();
+        PlexPage page;
+
+        if (group.isLibraryGroup() && group.getPlexLibrary() != null) {
+            page = fetchLibraryPage(libraryService, group.getPlexLibrary(), offset);
+        } else if (group.isContainerGroup() && group.getPlexContainer() != null) {
+            page = toPlexPage(libraryService.getChildrenPageObserve(group.getPlexContainer(), offset).blockingFirst());
+        } else {
+            return null;
+        }
+
+        if (page == null || page.getItems().isEmpty()) {
+            return null;
+        }
+
+        return PlexMediaGroupAdapter.continueFrom(group, page.getItems(), page);
+    }
+
+    @Nullable
+    private static PlexPage fetchLibraryPage(PlexLibraryService libraryService,
+                                             PlexLibrary library,
+                                             int offset) {
+        if (libraryService == null || library == null) {
+            return null;
+        }
+
+        PlexMediaPage page;
+        if (isMovieLibrary(library)) {
+            page = libraryService.getMoviesPageObserve(library, offset).blockingFirst();
+        } else if (isShowLibrary(library)) {
+            page = libraryService.getShowsPageObserve(library, offset).blockingFirst();
+        } else {
+            return null;
+        }
+
+        return toPlexPage(page);
+    }
+
+    @Nullable
+    private static PlexPage toPlexPage(@Nullable PlexMediaPage page) {
+        if (page == null) {
+            return null;
+        }
+        return new PlexPage(page.getItems(), page.getOffset(), page.getTotalSize());
+    }
+
+    private static int parseOffset(String nextPageKey) {
+        try {
+            return Integer.parseInt(nextPageKey);
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "Invalid Plex nextPageKey: " + nextPageKey);
+            return -1;
+        }
     }
 
     private static boolean isMovieLibrary(PlexLibrary library) {

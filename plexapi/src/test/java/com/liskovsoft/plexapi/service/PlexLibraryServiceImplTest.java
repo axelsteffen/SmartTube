@@ -87,6 +87,36 @@ public class PlexLibraryServiceImplTest {
     }
 
     @Test
+    public void getMoviesPageObserve_mapsOffsetAndTotalSize() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"offset\":50,"
+                + "\"size\":1,"
+                + "\"totalSize\":120,"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"1050\","
+                + "\"key\":\"/library/metadata/1050\","
+                + "\"type\":\"movie\","
+                + "\"title\":\"Second Page\","
+                + "\"year\":2002"
+                + "}]"
+                + "}}"));
+
+        PlexLibrary library = new PlexLibraryImpl("1", "Movies", "movie");
+        com.liskovsoft.plexserviceinterfaces.data.PlexMediaPage page =
+                mService.getMoviesPageObserve(library, 50).blockingFirst();
+
+        assertEquals(1, page.getItems().size());
+        assertEquals("1050", page.getItems().get(0).getRatingKey());
+        assertEquals(50, page.getOffset());
+        assertEquals(120, page.getTotalSize());
+
+        RecordedRequest request = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(request);
+        assertEquals("50", request.getHeader("X-Plex-Container-Start"));
+    }
+
+    @Test
     public void getMoviesObserve_mapsFirstPageAndAbsoluteThumb() throws Exception {
         mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
                 + "\"MediaContainer\":{"

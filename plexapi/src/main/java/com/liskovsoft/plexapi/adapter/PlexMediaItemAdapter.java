@@ -5,7 +5,9 @@ import android.media.Rating;
 import androidx.annotation.Nullable;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
+import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
 import com.liskovsoft.plexserviceinterfaces.data.PlexBackedMediaItem;
+import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
 /**
@@ -19,12 +21,17 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
     private static final String TYPE_MOVIE = "movie";
     private static final String TYPE_SHOW = "show";
     private static final String TYPE_SEASON = "season";
+    /** Opens full library grid via {@link #getReloadPageKey()} (Phase 3.4). */
+    private static final String TYPE_LIBRARY = "library";
 
     private final PlexMediaItem mItem;
     private final int mId;
+    @Nullable
+    private final String mLibraryType;
 
-    private PlexMediaItemAdapter(PlexMediaItem item) {
+    private PlexMediaItemAdapter(PlexMediaItem item, @Nullable String libraryType) {
         mItem = item;
+        mLibraryType = libraryType;
         String ratingKey = item.getRatingKey();
         mId = ratingKey != null ? Math.abs(ratingKey.hashCode()) : 0;
     }
@@ -34,7 +41,26 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
         if (item == null || item.getRatingKey() == null || item.getRatingKey().isEmpty()) {
             return null;
         }
-        return new PlexMediaItemAdapter(item);
+        return new PlexMediaItemAdapter(item, null);
+    }
+
+    /**
+     * First card in a Plex library row — opens the full paginated library grid.
+     */
+    @Nullable
+    public static PlexMediaItemAdapter fromLibraryBrowse(@Nullable PlexLibrary library) {
+        if (library == null || library.getKey() == null || library.getKey().isEmpty()) {
+            return null;
+        }
+        PlexMediaItem stub = new PlexMediaItemImpl(
+                library.getKey(),
+                library.getKey(),
+                library.getTitle(),
+                TYPE_LIBRARY,
+                0L,
+                null,
+                0);
+        return new PlexMediaItemAdapter(stub, library.getType());
     }
 
     /** Underlying Plex domain item (for stream lookup by ratingKey). */
@@ -99,12 +125,12 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public String getParams() {
-        return null;
+        return isLibraryBrowse() ? mLibraryType : null;
     }
 
     @Override
     public String getReloadPageKey() {
-        return null;
+        return isLibraryBrowse() ? mItem.getRatingKey() : null;
     }
 
     @Override
@@ -130,7 +156,10 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public String getVideoId() {
-        return isContainer() ? null : mItem.getRatingKey();
+        if (isLibraryBrowse() || isContainer()) {
+            return null;
+        }
+        return mItem.getRatingKey();
     }
 
     @Override
@@ -221,7 +250,7 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public boolean hasUploads() {
-        return isContainer();
+        return isContainer() || isLibraryBrowse();
     }
 
     @Override
@@ -251,6 +280,10 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
     private boolean isContainer() {
         String type = mItem.getType();
         return TYPE_SHOW.equalsIgnoreCase(type) || TYPE_SEASON.equalsIgnoreCase(type);
+    }
+
+    private boolean isLibraryBrowse() {
+        return TYPE_LIBRARY.equalsIgnoreCase(mItem.getType());
     }
 
     @Override

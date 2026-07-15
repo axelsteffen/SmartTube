@@ -2,6 +2,7 @@ package com.liskovsoft.plexserviceinterfaces;
 
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
+import com.liskovsoft.plexserviceinterfaces.data.PlexMediaPage;
 
 import java.util.List;
 
@@ -19,4 +20,11 @@ public interface PlexLibraryService {
 
     /** Show → seasons, season → episodes (Phase 3.3). */
     Observable<List<PlexMediaItem>> getChildrenObserve(PlexMediaItem parent);
+
+    /** Paginated section browse (Phase 3.4). {@code offset} is PMS container start. */
+    Observable<PlexMediaPage> getMoviesPageObserve(PlexLibrary library, int offset);
+
+    Observable<PlexMediaPage> getShowsPageObserve(PlexLibrary library, int offset);
+
+    Observable<PlexMediaPage> getChildrenPageObserve(PlexMediaItem parent, int offset);
 }

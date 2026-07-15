@@ -2,6 +2,7 @@ package com.liskovsoft.plexapi.service;
 
 import com.liskovsoft.plexapi.library.PlexLibraryImpl;
 import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
+import com.liskovsoft.plexapi.library.PlexPage;
 import com.liskovsoft.plexapi.network.PlexPmsApi;
 import com.liskovsoft.plexapi.network.PlexRetrofitHelper;
 import com.liskovsoft.plexapi.network.dto.MediaContainer;
@@ -12,6 +13,7 @@ import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.plexserviceinterfaces.PlexLibraryService;
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
+import com.liskovsoft.plexserviceinterfaces.data.PlexMediaPage;
 import com.liskovsoft.plexserviceinterfaces.data.PlexServer;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
@@ -23,7 +25,7 @@ import io.reactivex.Observable;
 import retrofit2.Response;
 
 /**
- * Lists PMS library sections, section items, and metadata children (Phase 1.5 / 3.3).
+ * Lists PMS library sections, section items, and metadata children (Phase 1.5 / 3.3 / 3.4).
  */
 public class PlexLibraryServiceImpl implements PlexLibraryService {
     private static final String TAG = PlexLibraryServiceImpl.class.getSimpleName();
@@ -69,6 +71,21 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
         return Observable.fromCallable(() -> fetchChildren(parent));
     }
 
+    @Override
+    public Observable<PlexMediaPage> getMoviesPageObserve(PlexLibrary library, int offset) {
+        return Observable.fromCallable(() -> fetchSectionPage(library, PlexPmsApi.TYPE_MOVIE, "movie", offset));
+    }
+
+    @Override
+    public Observable<PlexMediaPage> getShowsPageObserve(PlexLibrary library, int offset) {
+        return Observable.fromCallable(() -> fetchSectionPage(library, PlexPmsApi.TYPE_SHOW, "show", offset));
+    }
+
+    @Override
+    public Observable<PlexMediaPage> getChildrenPageObserve(PlexMediaItem parent, int offset) {
+        return Observable.fromCallable(() -> fetchChildrenPage(parent, offset));
+    }
+
     private List<PlexLibrary> fetchLibraries() throws IOException {
         PlexServer server = requireSelectedServer();
         PlexPmsApi api = pmsApi(server);
@@ -91,6 +108,12 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
 
     private List<PlexMediaItem> fetchSectionItems(PlexLibrary library, int type, String label)
             throws IOException {
+        PlexPage page = fetchSectionPage(library, type, label, 0);
+        return page.getItems();
+    }
+
+    private PlexPage fetchSectionPage(PlexLibrary library, int type, String label, int offset)
+            throws IOException {
         if (library == null || library.getKey() == null || library.getKey().isEmpty()) {
             throw new IllegalArgumentException("library with key required");
         }
@@ -101,15 +124,22 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
         String sectionId = sectionIdFromKey(library.getKey());
 
         Response<MediaContainerResponse> response = api.getSectionItems(
-                sectionId, type, 0, mPageSize, token).execute();
+                sectionId, type, offset, mPageSize, token).execute();
         MediaContainer container = requireContainer(response, "list " + label + " for section " + sectionId);
 
         List<PlexMediaItem> items = mapMetadata(container, server, token);
-        Log.d(TAG, "Listed " + items.size() + " " + label + "(s) from section " + sectionId);
-        return items;
+        int totalSize = resolveTotalSize(container, offset, items.size());
+        Log.d(TAG, "Listed page offset=" + offset + " size=" + items.size()
+                + " total=" + totalSize + " " + label + "(s) from section " + sectionId);
+        return new PlexPage(items, offset, totalSize);
     }
 
     private List<PlexMediaItem> fetchChildren(PlexMediaItem parent) throws IOException {
+        PlexPage page = fetchChildrenPage(parent, 0);
+        return page.getItems();
+    }
+
+    private PlexPage fetchChildrenPage(PlexMediaItem parent, int offset) throws IOException {
         if (parent == null || parent.getRatingKey() == null || parent.getRatingKey().isEmpty()) {
             throw new IllegalArgumentException("parent with ratingKey required");
         }
@@ -119,13 +149,27 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
         String token = pmsToken(server);
 
         Response<MediaContainerResponse> response = api.getMetadataChildren(
-                parent.getRatingKey(), 0, mPageSize, token).execute();
+                parent.getRatingKey(), offset, mPageSize, token).execute();
         MediaContainer container = requireContainer(response,
                 "list children for ratingKey " + parent.getRatingKey());
 
         List<PlexMediaItem> items = mapMetadata(container, server, token);
-        Log.d(TAG, "Listed " + items.size() + " child item(s) for " + parent.getTitle());
-        return items;
+        int totalSize = resolveTotalSize(container, offset, items.size());
+        Log.d(TAG, "Listed page offset=" + offset + " size=" + items.size()
+                + " total=" + totalSize + " child item(s) for " + parent.getTitle());
+        return new PlexPage(items, offset, totalSize);
+    }
+
+    private static int resolveTotalSize(MediaContainer container, int offset, int pageCount) {
+        Integer totalSize = container.getTotalSize();
+        if (totalSize != null && totalSize >= 0) {
+            return totalSize;
+        }
+        Integer size = container.getSize();
+        if (size != null && size >= 0) {
+            return offset + size;
+        }
+        return offset + pageCount;
     }
 
     private List<PlexMediaItem> mapMetadata(MediaContainer container, PlexServer server, String token) {

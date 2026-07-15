@@ -860,12 +860,19 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
         //    continuation = getContentService().continueGroupObserve(mediaGroup);
         //}
 
-        continuation = getContentService().continueGroupObserve(mediaGroup);
+        continuation = PlexBrowsePresenter.continueGroupObserve(mediaGroup);
+        if (continuation == null) {
+            continuation = getContentService().continueGroupObserve(mediaGroup);
+        }
 
         Disposable continueAction = continuation
                 .subscribe(
                         continueGroup -> {
                             getView().showProgressBar(false);
+
+                            if (continueGroup == null) {
+                                return;
+                            }
 
                             VideoGroup videoGroup = VideoGroup.from(group, continueGroup);
                             getView().updateSection(videoGroup);

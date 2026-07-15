@@ -3,6 +3,7 @@ package com.liskovsoft.plexapi.adapter;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.plexapi.library.PlexLibraryImpl;
 import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
+import com.liskovsoft.plexapi.library.PlexPage;
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
@@ -34,10 +35,12 @@ public class PlexMediaGroupAdapterTest {
         assertEquals("1", group.getParams());
         assertFalse(group.isEmpty());
         assertNotNull(group.getMediaItems());
-        assertEquals(2, group.getMediaItems().size());
-        assertEquals("10", group.getMediaItems().get(0).getVideoId());
-        assertEquals("Alpha", group.getMediaItems().get(0).getTitle());
-        assertEquals("20", group.getMediaItems().get(1).getVideoId());
+        assertEquals(3, group.getMediaItems().size());
+        assertNull(group.getMediaItems().get(0).getVideoId());
+        assertNotNull(group.getMediaItems().get(0).getReloadPageKey());
+        assertEquals("10", group.getMediaItems().get(1).getVideoId());
+        assertEquals("Alpha", group.getMediaItems().get(1).getTitle());
+        assertEquals("20", group.getMediaItems().get(2).getVideoId());
         assertNull(group.getNextPageKey());
         assertNull(group.getChannelId());
     }
@@ -51,18 +54,19 @@ public class PlexMediaGroupAdapterTest {
     }
 
     @Test
-    public void from_emptyOrNullItems_isEmpty() {
+    public void from_emptyOrNullItems_hasBrowseStubOnly() {
         PlexLibrary library = new PlexLibraryImpl("1", "Movies", "movie");
 
         MediaGroup emptyList = PlexMediaGroupAdapter.from(library, Collections.emptyList());
         assertNotNull(emptyList);
-        assertTrue(emptyList.isEmpty());
-        assertNull(emptyList.getMediaItems());
+        assertFalse(emptyList.isEmpty());
+        assertEquals(1, emptyList.getMediaItems().size());
+        assertNotNull(emptyList.getMediaItems().get(0).getReloadPageKey());
 
         MediaGroup nullItems = PlexMediaGroupAdapter.from(library, null);
         assertNotNull(nullItems);
-        assertTrue(nullItems.isEmpty());
-        assertNull(nullItems.getMediaItems());
+        assertFalse(nullItems.isEmpty());
+        assertEquals(1, nullItems.getMediaItems().size());
     }
 
     @Test
@@ -76,8 +80,54 @@ public class PlexMediaGroupAdapterTest {
 
         assertNotNull(group);
         assertNotNull(group.getMediaItems());
-        assertEquals(1, group.getMediaItems().size());
-        assertEquals("42", group.getMediaItems().get(0).getVideoId());
+        assertEquals(2, group.getMediaItems().size());
+        assertEquals("42", group.getMediaItems().get(1).getVideoId());
+    }
+
+    @Test
+    public void from_setsNextPageKeyWhenMorePagesExist() {
+        PlexLibrary library = new PlexLibraryImpl("1", "Movies", "movie");
+        List<PlexMediaItem> items = Collections.singletonList(movie("10", "Alpha"));
+        PlexPage page = new PlexPage(items, 0, 120);
+
+        MediaGroup group = PlexMediaGroupAdapter.from(library, items, page);
+
+        assertNotNull(group);
+        assertEquals("1", group.getNextPageKey());
+    }
+
+    @Test
+    public void continueFrom_returnsOnlyNewItemsWithUpdatedKey() {
+        PlexLibrary library = new PlexLibraryImpl("1", "Movies", "movie");
+        List<PlexMediaItem> firstPageItems = Collections.nCopies(50, movie("10", "Alpha"));
+        PlexMediaGroupAdapter base = PlexMediaGroupAdapter.from(
+                library,
+                firstPageItems,
+                new PlexPage(firstPageItems, 0, 120));
+
+        assertNotNull(base);
+        List<PlexMediaItem> nextItems = Collections.singletonList(movie("20", "Beta"));
+        MediaGroup continuation = PlexMediaGroupAdapter.continueFrom(
+                base, nextItems, new PlexPage(nextItems, 50, 120));
+
+        assertNotNull(continuation);
+        assertEquals(1, continuation.getMediaItems().size());
+        assertEquals("20", continuation.getMediaItems().get(0).getVideoId());
+        assertEquals("51", continuation.getNextPageKey());
+    }
+
+    @Test
+    public void fromLibraryGrid_hasNoBrowseStub() {
+        PlexLibrary library = new PlexLibraryImpl("1", "Movies", "movie");
+        List<PlexMediaItem> items = Collections.nCopies(50, movie("10", "Alpha"));
+
+        MediaGroup group = PlexMediaGroupAdapter.fromLibraryGrid(
+                library, items, new PlexPage(items, 0, 100));
+
+        assertNotNull(group);
+        assertEquals(50, group.getMediaItems().size());
+        assertEquals("10", group.getMediaItems().get(0).getVideoId());
+        assertEquals("50", group.getNextPageKey());
     }
 
     @Test
