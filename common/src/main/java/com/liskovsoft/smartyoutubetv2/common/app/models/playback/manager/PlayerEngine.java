@@ -33,6 +33,8 @@ public interface PlayerEngine extends PlayerConstants {
     FormatItem getVideoFormat();
     FormatItem getAudioFormat();
     FormatItem getSubtitleFormat();
+    /** Prefer an audio language when tracks become available (e.g. Plex Direct Play). */
+    void setPreferredAudioLanguage(String language);
     boolean isEngineInitialized();
     void restartEngine();
     void reloadPlayback();

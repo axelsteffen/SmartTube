@@ -192,7 +192,7 @@ components:
         protocol: { type: string, description: "hls | dash | http (decision endpoint)" }
         Stream:
           type: array
-          description: "Video/audio/subtitle streams under the part (Phase 4.2)"
+          description: "Video/audio/subtitle streams under the part (Phase 4.2–4.3)"
           items: { $ref: "#/components/schemas/Stream" }
 
     Stream:
@@ -200,6 +200,7 @@ components:
       description: |
         Media stream under a Part. streamType: 1=video, 2=audio, 3=subtitle.
         External subtitle sidecars expose a downloadable `key` (e.g. /library/streams/123).
+        Audio tracks use `id` as audioStreamID on /video/:/transcode/universal/decision.
       properties:
         id: { type: integer }
         streamType: { type: integer, description: "1 video | 2 audio | 3 subtitle" }
@@ -211,6 +212,7 @@ components:
         title: { type: string }
         key: { type: string, description: "Relative download path for external subtitles" }
         selected: { type: boolean }
+        channels: { type: integer, description: "Audio channel count (Phase 4.3)" }
 
     PlexPin:
       type: object
@@ -509,6 +511,10 @@ paths:
         - name: partIndex
           in: query
           schema: { type: integer }
+        - name: audioStreamID
+          in: query
+          schema: { type: integer }
+          description: "PMS Stream.id for audio (Phase 4.3); omit to use server default"
       responses:
         "200":
           description: Decision MediaContainer (Part.decision / protocol)

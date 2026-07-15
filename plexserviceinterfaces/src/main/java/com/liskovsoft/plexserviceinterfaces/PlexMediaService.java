@@ -1,5 +1,7 @@
 package com.liskovsoft.plexserviceinterfaces;
 
+import androidx.annotation.Nullable;
+
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
 
@@ -15,6 +17,17 @@ public interface PlexMediaService {
     String STATE_STOPPED = "stopped";
 
     Observable<PlexStreamInfo> getStreamInfoObserve(PlexMediaItem item);
+
+    /**
+     * Resolves stream URL with optional audio track override (Phase 4.3).
+     *
+     * @param audioStreamId      PMS audio stream id, or {@code null} to auto-pick
+     * @param preferredLanguage  preferred ISO language (e.g. from player prefs), or {@code null}
+     */
+    Observable<PlexStreamInfo> getStreamInfoObserve(
+            PlexMediaItem item,
+            @Nullable Long audioStreamId,
+            @Nullable String preferredLanguage);
 
     /**
      * Reports playback progress to PMS ({@code /:/timeline}).

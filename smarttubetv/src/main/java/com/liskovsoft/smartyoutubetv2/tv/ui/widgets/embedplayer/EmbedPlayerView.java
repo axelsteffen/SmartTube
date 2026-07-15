@@ -384,6 +384,11 @@ public class EmbedPlayerView extends PlayerView implements PlaybackView {
     }
 
     @Override
+    public void setPreferredAudioLanguage(String language) {
+        mExoPlayerController.setPreferredAudioLanguage(language);
+    }
+
+    @Override
     public boolean isEngineInitialized() {
         return mPlayer != null;
     }

@@ -290,7 +290,7 @@ public class VideoLoaderController extends BasePlayerController {
         Observable<MediaItemFormatInfo> formatInfoObserve;
 
         if (video.isPlex()) {
-            formatInfoObserve = PlexPlaybackHelper.getFormatInfoObserve(video);
+            formatInfoObserve = PlexPlaybackHelper.getFormatInfoObserve(video, getContext());
             if (formatInfoObserve == null) {
                 formatInfoObserve = Observable.error(
                         new IllegalStateException("Plex video missing ratingKey/mediaItem"));
@@ -368,9 +368,11 @@ public class VideoLoaderController extends BasePlayerController {
             // VOD HLS (e.g. Plex transcode) — live gate above does not apply
             Log.d(TAG, "Loading VOD video in hls format...");
             player.openHlsUrl(formatInfo.getHlsManifestUrl(), formatInfo);
+            applyPlexPreferredAudioLanguage();
         } else if (formatInfo.containsUrlFormats()) {
             Log.d(TAG, "Loading url list video. This is always LQ...");
             player.openUrlList(formatInfo.createUrlList(), formatInfo);
+            applyPlexPreferredAudioLanguage();
         } else {
             Log.d(TAG, "Empty format info received. Seems future live translation. No video data to pass to the player.");
             player.setTitle(formatInfo.getPlayabilityReason());
@@ -382,6 +384,44 @@ public class VideoLoaderController extends BasePlayerController {
         }
 
         player.showBackground(bgImageUrl); // remove bg (if video playing) or set another bg
+    }
+
+    /**
+     * Reloads Plex HLS with a different PMS {@code audioStreamID}, preserving position.
+     * Phase 4.3 Option B mid-playback audio switch.
+     */
+    public void reloadPlexAudio(long audioStreamId) {
+        Video video = getVideo();
+        PlaybackView player = getPlayer();
+        if (video == null || !video.isPlex() || player == null || audioStreamId <= 0L) {
+            return;
+        }
+
+        long positionMs = player.getPositionMs();
+        if (positionMs > 0L) {
+            video.startTimeSeconds = (int) (positionMs / 1000L);
+            long durationMs = player.getDurationMs();
+            if (durationMs > 0L) {
+                video.percentWatched = Math.min(100f, (positionMs * 100f) / durationMs);
+            }
+        }
+
+        PlexPlaybackHelper.setOverrideAudioStreamId(audioStreamId);
+        Log.d(TAG, "Reloading Plex with audioStreamID=" + audioStreamId
+                + " positionMs=" + positionMs);
+        loadFormatInfo(video);
+    }
+
+    private void applyPlexPreferredAudioLanguage() {
+        Video video = getVideo();
+        PlaybackView player = getPlayer();
+        if (video == null || !video.isPlex() || player == null) {
+            return;
+        }
+        String language = PlexPlaybackHelper.getPreferredAudioLanguage();
+        if (language != null && !language.isEmpty()) {
+            player.setPreferredAudioLanguage(language);
+        }
     }
 
     private void reloadVideo(int delayMs) {

@@ -281,6 +281,10 @@ public class ExoPlayerController implements Player.EventListener {
         return getSelectedFormat(TrackSelectorManager.RENDERER_INDEX_SUBTITLE);
     }
 
+    public void setPreferredAudioLanguage(String language) {
+        mTrackSelectorManager.setPreferredAudioLanguage(language);
+    }
+
     private FormatItem getSelectedFormat(int rendererIndex) {
         return ExoFormatItem.from(mTrackSelectorManager.getSelectedTrack(rendererIndex));
     }

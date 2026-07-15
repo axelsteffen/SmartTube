@@ -437,6 +437,14 @@ public class VideoStateController extends BasePlayerController {
             return;
         }
 
+        // Plex Direct Play: prefer language from PMS selected / player prefs before global format.
+        if (getVideo() != null && getVideo().isPlex()) {
+            String language = PlexPlaybackHelper.getPreferredAudioLanguage();
+            if (language != null && !language.isEmpty()) {
+                getPlayer().setPreferredAudioLanguage(language);
+            }
+        }
+
         getPlayer().setFormat(getPlayerData().getFormat(FormatItem.TYPE_AUDIO));
     }
 

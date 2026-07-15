@@ -62,6 +62,7 @@ public interface PlexPmsApi {
             @Query("protocol") String protocol,
             @Query("mediaIndex") Integer mediaIndex,
             @Query("partIndex") Integer partIndex,
+            @Query("audioStreamID") Long audioStreamId,
             @Header(PlexHeaders.TOKEN) String token);
 
     /**

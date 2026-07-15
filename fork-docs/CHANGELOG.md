@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -49,6 +49,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../playback/manager/PlayerEngine.java**: Overloads `openHlsUrl`/`openUrlList` with `MediaItemFormatInfo` (Phase 4.2).
 - **common/.../playback/controllers/VideoLoaderController.java**: Passes formatInfo into HLS/URL open for subtitle merge (Phase 4.2).
 - **smarttubetv/.../PlaybackFragment.java**, **EmbedPlayerView.java**: Implement subtitle-aware open overloads (Phase 4.2).
+- **common/.../misc/PlexPlaybackHelper.java**: Audio session + preferred language + override stream id for HLS switch (Phase 4.3).
+- **common/.../playback/controllers/VideoLoaderController.java**: `reloadPlexAudio()` mid-playback HLS reload; preferred audio language on open (Phase 4.3).
+- **common/.../playback/controllers/HQDialogController.java**: Plex HLS audio list → decision reload (Phase 4.3).
+- **common/.../playback/controllers/VideoStateController.java**: Apply preferred audio language for Plex (Phase 4.3).
+- **common/.../exoplayer/selector/TrackSelectorManager.java**, **ExoPlayerController.java**, **PlayerEngine.java**: `setPreferredAudioLanguage` (Phase 4.3).
+- **smarttubetv/.../PlaybackFragment.java**, **EmbedPlayerView.java**: Preferred audio language API (Phase 4.3).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -122,6 +128,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../adapter/PlexMediaItemFormatInfo.java**: `getSubtitles()` from stream (Phase 4.2).
 - **plexapi/openapi-plex-pms-in-use.yaml**: `Stream` schema under Part (Phase 4.2).
 - **plexapi/src/test/...**: Subtitle collect/map unit tests (Phase 4.2).
+- **plexserviceinterfaces/.../data/PlexAudioTrack.java** (new): Audio stream contract (Phase 4.3).
+- **plexserviceinterfaces/.../data/PlexStreamInfo.java**: `getAudioTracks()` / `getSelectedAudioStreamId()` (Phase 4.3).
+- **plexserviceinterfaces/.../PlexMediaService.java**: `getStreamInfoObserve(item, audioStreamId, preferredLanguage)` (Phase 4.3).
+- **plexapi/.../media/PlexAudioTrackImpl.java** (new): Immutable audio track (Phase 4.3).
+- **plexapi/.../network/dto/PlexStream.java**: `TYPE_AUDIO` + `channels` (Phase 4.3).
+- **plexapi/.../network/PlexPmsApi.java**: `audioStreamID` on decision (Phase 4.3).
+- **plexapi/.../service/PlexMediaServiceImpl.java**: Collect/pick audio; pass `audioStreamID` on decision (Phase 4.3).
+- **plexapi/.../media/PlexStreamInfoImpl.java**: Carry audio tracks + selected id (Phase 4.3).
+- **plexapi/openapi-plex-pms-in-use.yaml**: Stream `channels` + decision audioStreamID note (Phase 4.3).
+- **plexapi/src/test/...**: Audio collect/pick unit tests (Phase 4.3).
 
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_

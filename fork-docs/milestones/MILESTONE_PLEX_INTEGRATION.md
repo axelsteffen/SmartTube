@@ -13,7 +13,7 @@ Play Plex media (primarily own library on Plex Media Server) inside SmartTube wi
 | `common/` / `smarttubetv/` | Hardcoded `YouTubeServiceManager.instance()` (~30 places) |
 | Playback | ExoPlayer, source-agnostic (HLS/DASH/MP4) |
 | MediaServiceCore fork | Category field in interfaces + OpenAPI spec |
-| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) |
+| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) + audio track selection (4.3) |
 
 ## Architecture Principles
 
@@ -151,7 +151,8 @@ SmartTube/                          (Fork)
 | 3 | 3.5 Plex settings (server, credentials) | done |
 | 4 | 4.1 Resume position sync with Plex | done |
 | 4 | 4.2 Subtitles (external sidecars) | done |
-| 4 | 4.3–4.6 Playback polish (audio, YT-only, transcode, errors) | open |
+| 4 | 4.3 Audio track selection | done |
+| 4 | 4.4–4.6 Playback polish (YT-only, transcode, errors) | open |
 | 5 | 5.1–5.4 Hardening | open |
 
 ## Rough Effort

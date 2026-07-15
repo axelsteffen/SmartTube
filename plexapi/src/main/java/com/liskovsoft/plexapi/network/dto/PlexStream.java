@@ -8,6 +8,8 @@ import com.google.gson.annotations.SerializedName;
  */
 public class PlexStream {
     /** PMS: 1 = video, 2 = audio, 3 = subtitle. */
+    public static final int TYPE_VIDEO = 1;
+    public static final int TYPE_AUDIO = 2;
     public static final int TYPE_SUBTITLE = 3;
 
     @SerializedName("id")
@@ -39,6 +41,9 @@ public class PlexStream {
 
     @SerializedName("selected")
     private boolean mSelected;
+
+    @SerializedName("channels")
+    private int mChannels;
 
     public long getId() {
         return mId;
@@ -78,5 +83,9 @@ public class PlexStream {
 
     public boolean isSelected() {
         return mSelected;
+    }
+
+    public int getChannels() {
+        return mChannels;
     }
 }

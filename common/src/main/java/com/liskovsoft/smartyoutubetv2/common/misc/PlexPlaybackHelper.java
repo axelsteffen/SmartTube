@@ -1,5 +1,7 @@
 package com.liskovsoft.smartyoutubetv2.common.misc;
 
+import android.content.Context;
+
 import androidx.annotation.Nullable;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
@@ -8,11 +10,16 @@ import com.liskovsoft.plexapi.adapter.PlexMediaItemAdapter;
 import com.liskovsoft.plexapi.adapter.PlexMediaItemFormatInfo;
 import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
 import com.liskovsoft.plexserviceinterfaces.PlexMediaService;
+import com.liskovsoft.plexserviceinterfaces.data.PlexAudioTrack;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
+
+import java.util.Collections;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -20,7 +27,7 @@ import io.reactivex.disposables.Disposable;
 /**
  * Fork-only: resolves {@link MediaItemFormatInfo} for Plex {@link Video}s
  * so {@code VideoLoaderController} can open Direct Play / HLS via ExoPlayer.
- * Also syncs resume progress with PMS (Phase 4.1).
+ * Also syncs resume progress (4.1) and audio track session state (4.3).
  */
 public final class PlexPlaybackHelper {
     private static final String TAG = PlexPlaybackHelper.class.getSimpleName();
@@ -28,7 +35,39 @@ public final class PlexPlaybackHelper {
     @Nullable
     private static Disposable sProgressAction;
 
+    /** Transient override for next format resolve (HLS audio switch). */
+    @Nullable
+    private static Long sOverrideAudioStreamId;
+
+    @Nullable
+    private static PlaybackSession sSession;
+
     private PlexPlaybackHelper() {
+    }
+
+    /** Snapshot of the last resolved Plex stream for the active playback. */
+    public static final class PlaybackSession {
+        public final String ratingKey;
+        public final boolean transcoded;
+        public final List<PlexAudioTrack> audioTracks;
+        public final long selectedAudioStreamId;
+        @Nullable
+        public final String preferredAudioLanguage;
+
+        PlaybackSession(
+                String ratingKey,
+                boolean transcoded,
+                List<PlexAudioTrack> audioTracks,
+                long selectedAudioStreamId,
+                @Nullable String preferredAudioLanguage) {
+            this.ratingKey = ratingKey;
+            this.transcoded = transcoded;
+            this.audioTracks = audioTracks != null
+                    ? audioTracks
+                    : Collections.emptyList();
+            this.selectedAudioStreamId = selectedAudioStreamId;
+            this.preferredAudioLanguage = preferredAudioLanguage;
+        }
     }
 
     /**
@@ -37,19 +76,38 @@ public final class PlexPlaybackHelper {
      */
     @Nullable
     public static Observable<MediaItemFormatInfo> getFormatInfoObserve(@Nullable Video video) {
+        return getFormatInfoObserve(video, null);
+    }
+
+    /**
+     * @param context used to read preferred audio language from {@link PlayerData}
+     */
+    @Nullable
+    public static Observable<MediaItemFormatInfo> getFormatInfoObserve(
+            @Nullable Video video, @Nullable Context context) {
         PlexMediaItem item = resolvePlexItem(video);
         if (item == null) {
             return null;
         }
 
-        // RxHelper schedules IO + main observe; service Observable is unscheduled so
-        // blockingFirst() runs fetch on the IO worker (safe for unit tests too).
+        Long overrideAudioId = consumeOverrideAudioStreamId();
+        String preferredLanguage = null;
+        if (context != null) {
+            preferredLanguage = PlayerData.instance(context).getAudioLanguage();
+            if (preferredLanguage != null && preferredLanguage.isEmpty()) {
+                preferredLanguage = null;
+            }
+        }
+        final String preferredLangFinal = preferredLanguage;
+        final Long overrideFinal = overrideAudioId;
+
         return RxHelper.fromCallable(() -> {
             PlexStreamInfo stream = PlexServiceManager.instance()
                     .getMediaService()
-                    .getStreamInfoObserve(item)
+                    .getStreamInfoObserve(item, overrideFinal, preferredLangFinal)
                     .blockingFirst();
             applyViewOffset(video, stream);
+            rememberSession(item.getRatingKey(), stream, preferredLangFinal);
             MediaItemFormatInfo formatInfo = PlexMediaItemFormatInfo.from(item, stream);
             if (formatInfo == null) {
                 throw new IllegalStateException(
@@ -57,6 +115,76 @@ public final class PlexPlaybackHelper {
             }
             return formatInfo;
         });
+    }
+
+    /** Sets audio stream id for the next format resolve (mid-playback HLS switch). */
+    public static void setOverrideAudioStreamId(long audioStreamId) {
+        sOverrideAudioStreamId = audioStreamId > 0L ? audioStreamId : null;
+    }
+
+    @Nullable
+    private static Long consumeOverrideAudioStreamId() {
+        Long id = sOverrideAudioStreamId;
+        sOverrideAudioStreamId = null;
+        return id;
+    }
+
+    private static void rememberSession(
+            String ratingKey, PlexStreamInfo stream, @Nullable String preferredLanguage) {
+        if (stream == null) {
+            sSession = null;
+            return;
+        }
+        String preferred = preferredLanguage;
+        if ((preferred == null || preferred.isEmpty())
+                && stream.getSelectedAudioStreamId() > 0L) {
+            for (PlexAudioTrack track : stream.getAudioTracks()) {
+                if (track.getId() == stream.getSelectedAudioStreamId()) {
+                    preferred = track.getLanguageCode();
+                    break;
+                }
+            }
+        }
+        sSession = new PlaybackSession(
+                ratingKey,
+                stream.isTranscoded(),
+                stream.getAudioTracks(),
+                stream.getSelectedAudioStreamId(),
+                preferred);
+    }
+
+    public static void clearSession() {
+        sSession = null;
+        sOverrideAudioStreamId = null;
+    }
+
+    @Nullable
+    public static PlaybackSession getSession() {
+        return sSession;
+    }
+
+    /** True when transcoded HLS has multiple Plex audio tracks (needs decision reload). */
+    public static boolean needsAudioStreamReload(@Nullable Video video) {
+        if (video == null || !video.isPlex() || sSession == null) {
+            return false;
+        }
+        if (video.videoId != null && !video.videoId.equals(sSession.ratingKey)) {
+            return false;
+        }
+        return sSession.transcoded && sSession.audioTracks.size() > 1;
+    }
+
+    public static List<PlexAudioTrack> getAudioTracks() {
+        return sSession != null ? sSession.audioTracks : Collections.emptyList();
+    }
+
+    public static long getSelectedAudioStreamId() {
+        return sSession != null ? sSession.selectedAudioStreamId : 0L;
+    }
+
+    @Nullable
+    public static String getPreferredAudioLanguage() {
+        return sSession != null ? sSession.preferredAudioLanguage : null;
     }
 
     /**

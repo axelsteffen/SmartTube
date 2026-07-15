@@ -8,8 +8,11 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.OptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
+import com.liskovsoft.plexserviceinterfaces.data.PlexAudioTrack;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,7 +74,6 @@ public class HQDialogController extends BasePlayerController {
         List<FormatItem> videoFormats = getPlayer().getVideoFormats();
         String videoFormatsTitle = getContext().getString(R.string.title_video_formats);
 
-        List<FormatItem> audioFormats = getPlayer().getAudioFormats();
         String audioFormatsTitle = getContext().getString(R.string.title_audio_formats);
 
         addCategoryInt(OptionCategory.from(
@@ -79,11 +81,38 @@ public class HQDialogController extends BasePlayerController {
                 OptionCategory.TYPE_RADIO_LIST,
                 videoFormatsTitle,
                 UiOptionItem.from(videoFormats, this::selectFormatOption, getContext().getString(R.string.option_disabled))));
-        addCategoryInt(OptionCategory.from(
-                AUDIO_FORMATS_ID,
-                OptionCategory.TYPE_RADIO_LIST,
-                audioFormatsTitle,
-                UiOptionItem.from(audioFormats, this::selectFormatOption, getContext().getString(R.string.option_disabled))));
+
+        if (PlexPlaybackHelper.needsAudioStreamReload(getVideo())) {
+            addCategoryInt(createPlexAudioCategory(audioFormatsTitle));
+        } else {
+            List<FormatItem> audioFormats = getPlayer().getAudioFormats();
+            addCategoryInt(OptionCategory.from(
+                    AUDIO_FORMATS_ID,
+                    OptionCategory.TYPE_RADIO_LIST,
+                    audioFormatsTitle,
+                    UiOptionItem.from(audioFormats, this::selectFormatOption, getContext().getString(R.string.option_disabled))));
+        }
+    }
+
+    /**
+     * Plex HLS/transcode: Exo often exposes one audio track only — offer PMS audio streams
+     * and reload decision with {@code audioStreamID} (Phase 4.3 Option B).
+     */
+    private OptionCategory createPlexAudioCategory(String title) {
+        List<PlexAudioTrack> tracks = PlexPlaybackHelper.getAudioTracks();
+        long selectedId = PlexPlaybackHelper.getSelectedAudioStreamId();
+        List<OptionItem> options = new ArrayList<>();
+        for (PlexAudioTrack track : tracks) {
+            String label = track.getName() != null ? track.getName() : String.valueOf(track.getId());
+            options.add(UiOptionItem.from(label, optionItem -> {
+                VideoLoaderController loader = getController(VideoLoaderController.class);
+                if (loader != null) {
+                    loader.reloadPlexAudio(track.getId());
+                }
+            }, track.getId() == selectedId));
+        }
+        return OptionCategory.from(
+                AUDIO_FORMATS_ID, OptionCategory.TYPE_RADIO_LIST, title, options);
     }
 
     private void selectFormatOption(OptionItem option) {

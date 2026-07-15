@@ -1,6 +1,7 @@
 package com.liskovsoft.plexapi.service;
 
 import com.liskovsoft.plexapi.adapter.PlexMediaSubtitle;
+import com.liskovsoft.plexapi.media.PlexAudioTrackImpl;
 import com.liskovsoft.plexapi.media.PlexStreamInfoImpl;
 import com.liskovsoft.plexapi.media.PlexSubtitleImpl;
 import com.liskovsoft.plexapi.network.PlexPmsApi;
@@ -14,6 +15,7 @@ import com.liskovsoft.plexapi.network.dto.PlexPart;
 import com.liskovsoft.plexapi.network.dto.PlexStream;
 import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.plexserviceinterfaces.PlexMediaService;
+import com.liskovsoft.plexserviceinterfaces.data.PlexAudioTrack;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexServer;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
@@ -25,14 +27,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.Observable;
 import retrofit2.Response;
 
 /**
- * Resolves playable stream URLs, external subtitles, and reports playback progress
- * (Phase 1.6 / 4.1 / 4.2). Prefers Direct Play from metadata {@code Part.key};
- * falls back to HLS decision.
+ * Resolves playable stream URLs, external subtitles, audio track preference,
+ * and reports playback progress (Phase 1.6 / 4.1 / 4.2 / 4.3).
  */
 public class PlexMediaServiceImpl implements PlexMediaService {
     private static final String TAG = PlexMediaServiceImpl.class.getSimpleName();
@@ -56,7 +58,14 @@ public class PlexMediaServiceImpl implements PlexMediaService {
 
     @Override
     public Observable<PlexStreamInfo> getStreamInfoObserve(PlexMediaItem item) {
-        return Observable.fromCallable(() -> fetchStreamInfo(item));
+        return getStreamInfoObserve(item, null, null);
+    }
+
+    @Override
+    public Observable<PlexStreamInfo> getStreamInfoObserve(
+            PlexMediaItem item, Long audioStreamId, String preferredLanguage) {
+        return Observable.fromCallable(
+                () -> fetchStreamInfo(item, audioStreamId, preferredLanguage));
     }
 
     @Override
@@ -71,7 +80,8 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         });
     }
 
-    private PlexStreamInfo fetchStreamInfo(PlexMediaItem item) throws IOException {
+    private PlexStreamInfo fetchStreamInfo(
+            PlexMediaItem item, Long audioStreamId, String preferredLanguage) throws IOException {
         if (item == null || item.getRatingKey() == null || item.getRatingKey().isEmpty()) {
             throw new IllegalArgumentException("item with ratingKey required");
         }
@@ -87,6 +97,8 @@ public class PlexMediaServiceImpl implements PlexMediaService {
 
         long viewOffsetMs = firstViewOffset(metaContainer);
         List<PlexSubtitle> subtitles = collectExternalSubtitles(metaContainer, baseUrl, token);
+        List<PlexAudioTrack> audioTracks = collectAudioTracks(metaContainer);
+        long selectedAudioId = pickAudioStreamId(audioTracks, audioStreamId, preferredLanguage);
 
         PlexPart directPart = firstPartWithKey(metaContainer);
         if (directPart != null) {
@@ -96,13 +108,19 @@ public class PlexMediaServiceImpl implements PlexMediaService {
                 container = firstMediaContainer(metaContainer);
             }
             Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey()
-                    + " subtitles=" + subtitles.size());
+                    + " subtitles=" + subtitles.size()
+                    + " audioTracks=" + audioTracks.size()
+                    + " preferredAudio=" + selectedAudioId);
             return new PlexStreamInfoImpl(
-                    url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs, subtitles);
+                    url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs,
+                    subtitles, audioTracks, selectedAudioId);
         }
 
-        Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey());
-        return resolveViaDecision(api, item.getRatingKey(), baseUrl, token, viewOffsetMs, subtitles);
+        Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey()
+                + " audioStreamID=" + selectedAudioId);
+        return resolveViaDecision(
+                api, item.getRatingKey(), baseUrl, token, viewOffsetMs,
+                subtitles, audioTracks, selectedAudioId);
     }
 
     private void reportTimeline(PlexMediaItem item, long positionMs, long durationMs, String state)
@@ -150,10 +168,13 @@ public class PlexMediaServiceImpl implements PlexMediaService {
             String baseUrl,
             String token,
             long viewOffsetMs,
-            List<PlexSubtitle> subtitles) throws IOException {
+            List<PlexSubtitle> subtitles,
+            List<PlexAudioTrack> audioTracks,
+            long selectedAudioId) throws IOException {
         String path = "/library/metadata/" + ratingKey;
+        Long audioQuery = selectedAudioId > 0L ? selectedAudioId : null;
         Response<MediaContainerResponse> decisionResponse = api.getPlaybackDecision(
-                path, 1, 1, "hls", 0, 0, token).execute();
+                path, 1, 1, "hls", 0, 0, audioQuery, token).execute();
         MediaContainer decisionContainer =
                 requireContainer(decisionResponse, "playback decision for " + ratingKey);
 
@@ -174,9 +195,11 @@ public class PlexMediaServiceImpl implements PlexMediaService {
 
         Log.d(TAG, "Decision stream for ratingKey=" + ratingKey
                 + " transcoded=" + transcoded + " decision=" + part.getDecision()
-                + " subtitles=" + subtitles.size());
+                + " subtitles=" + subtitles.size()
+                + " audioStreamID=" + selectedAudioId);
         return new PlexStreamInfoImpl(
-                url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded, viewOffsetMs, subtitles);
+                url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded, viewOffsetMs,
+                subtitles, audioTracks, selectedAudioId);
     }
 
     /**
@@ -223,6 +246,86 @@ public class PlexMediaServiceImpl implements PlexMediaService {
             }
         }
         return result.isEmpty() ? Collections.emptyList() : result;
+    }
+
+    /** Collects audio streams ({@code streamType=2}). */
+    static List<PlexAudioTrack> collectAudioTracks(MediaContainer container) {
+        if (container == null) {
+            return Collections.emptyList();
+        }
+        List<PlexAudioTrack> result = new ArrayList<>();
+        for (PlexMetadata metadata : container.getMetadata()) {
+            for (PlexMedia media : metadata.getMedia()) {
+                for (PlexPart part : media.getParts()) {
+                    for (PlexStream stream : part.getStreams()) {
+                        if (stream.getStreamType() != PlexStream.TYPE_AUDIO) {
+                            continue;
+                        }
+                        if (stream.getId() <= 0L) {
+                            continue;
+                        }
+                        String languageCode = firstNonEmpty(
+                                stream.getLanguageCode(),
+                                stream.getLanguageTag(),
+                                stream.getLanguage());
+                        String name = firstNonEmpty(
+                                stream.getDisplayTitle(),
+                                stream.getTitle(),
+                                languageCode,
+                                stream.getCodec());
+                        result.add(new PlexAudioTrackImpl(
+                                stream.getId(),
+                                languageCode,
+                                name,
+                                stream.getCodec(),
+                                stream.getChannels(),
+                                stream.isSelected()));
+                    }
+                }
+            }
+        }
+        return result.isEmpty() ? Collections.emptyList() : result;
+    }
+
+    /**
+     * Picks audio stream id: explicit override → preferred language → PMS selected → first.
+     */
+    static long pickAudioStreamId(
+            List<PlexAudioTrack> tracks, Long overrideId, String preferredLanguage) {
+        if (tracks == null || tracks.isEmpty()) {
+            return 0L;
+        }
+        if (overrideId != null && overrideId > 0L) {
+            for (PlexAudioTrack track : tracks) {
+                if (track.getId() == overrideId) {
+                    return overrideId;
+                }
+            }
+        }
+        if (preferredLanguage != null && !preferredLanguage.isEmpty()) {
+            String pref = preferredLanguage.toLowerCase(Locale.US);
+            for (PlexAudioTrack track : tracks) {
+                if (languageMatches(track.getLanguageCode(), pref)) {
+                    return track.getId();
+                }
+            }
+        }
+        for (PlexAudioTrack track : tracks) {
+            if (track.isSelected()) {
+                return track.getId();
+            }
+        }
+        return tracks.get(0).getId();
+    }
+
+    static boolean languageMatches(String languageCode, String preferredLower) {
+        if (languageCode == null || languageCode.isEmpty() || preferredLower == null) {
+            return false;
+        }
+        String code = languageCode.toLowerCase(Locale.US);
+        return code.equals(preferredLower)
+                || code.startsWith(preferredLower + "-")
+                || preferredLower.startsWith(code + "-");
     }
 
     private static String firstNonEmpty(String... values) {

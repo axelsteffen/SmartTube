@@ -1067,6 +1067,11 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     }
 
     @Override
+    public void setPreferredAudioLanguage(String language) {
+        mExoPlayerController.setPreferredAudioLanguage(language);
+    }
+
+    @Override
     public boolean isEngineInitialized() {
         return mPlayer != null;
     }

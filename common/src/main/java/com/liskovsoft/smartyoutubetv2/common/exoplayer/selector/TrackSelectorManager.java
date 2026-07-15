@@ -447,6 +447,17 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         }
     }
 
+    /** Prefers the given audio language for automatic track selection (Plex Direct Play). */
+    public void setPreferredAudioLanguage(String language) {
+        if (mTrackSelector == null || language == null || language.isEmpty()) {
+            return;
+        }
+        mTrackSelector.setParameters(
+                mTrackSelector.buildUponParameters()
+                        .setPreferredAudioLanguage(language)
+                        .build());
+    }
+
     public void release() {
         if (mTrackSelector != null) {
             Log.d(TAG, "Destroying TrackSelector...");

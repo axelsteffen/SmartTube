@@ -18,4 +18,13 @@ public interface PlexStreamInfo {
 
     /** External sidecar subtitles (empty if none / unsupported codecs only). */
     List<PlexSubtitle> getSubtitles();
+
+    /** Audio streams from metadata (empty if none). */
+    List<PlexAudioTrack> getAudioTracks();
+
+    /**
+     * Audio stream id chosen for this resolve (preferred / override / selected).
+     * {@code 0} if none / Direct Play without preference applied at PMS.
+     */
+    long getSelectedAudioStreamId();
 }
