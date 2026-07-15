@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.3 done (modules + PIN auth). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.4 done (modules + PIN auth + server discovery). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -30,12 +30,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### plexserviceinterfaces
 - **plexserviceinterfaces/** (new): Fork-only Plex API contracts — `PlexServiceManager`, sign-in/server/library/media services, and data interfaces (`PlexServer`, `PlexLibrary`, `PlexMediaItem`, `PlexStreamInfo`, `PlexAuthPin`).
+- **plexserviceinterfaces/.../data/PlexServer.java**: Added `getAccessToken()` for per-server PMS auth.
 
 ### plexapi
 - **plexapi/** (new): Fork-only Plex API implementation module (Retrofit deps). Entry point `com.liskovsoft.plexapi.PlexServiceManager`.
-- **plexapi/.../prefs/PlexPrefs.java**: Persists auth token and stable `X-Plex-Client-Identifier` UUID.
+- **plexapi/.../prefs/PlexPrefs.java**: Persists auth token, selected server (id/name/baseUrl/accessToken), and stable `X-Plex-Client-Identifier` UUID.
 - **plexapi/.../network/**: `PlexTvApi`, Retrofit helper, `PlexHeadersInterceptor` for plex.tv calls.
-- **plexapi/.../service/PlexSignInServiceImpl.java**: PIN auth (`signInWithPinObserve`) + `setAuthToken`/`signOut` with prefs persistence (Phase 1.3). Server/library/media still stubs until 1.4–1.6.
+- **plexapi/.../service/PlexSignInServiceImpl.java**: PIN auth (`signInWithPinObserve`) + `setAuthToken`/`signOut` with prefs persistence (Phase 1.3). `signOut` clears selected server.
+- **plexapi/.../service/PlexServerServiceImpl.java**: Server discovery via plex.tv `/api/v2/resources` (Phase 1.4); selects connection (local HTTPS preferred); persists selection in `PlexPrefs`.
+- **plexapi/.../server/PlexServerImpl.java**: Maps `PlexResource` → `PlexServer` (incl. per-server `accessToken`).
 - **plexapi/openapi-plex-pms-in-use.yaml** (new): Scoped OpenAPI (PMS 1.2.2 + plex.tv) for PoC endpoints — identity, sections, section items, metadata, parts, playback decision, resources.
 - **plexapi/.../network/PlexPmsApi.java**, **PlexTvResourcesApi.java**: Retrofit contracts for PMS + server discovery.
 - **plexapi/.../network/dto/**: Gson DTOs (`MediaContainer`, `PlexDirectory`, `PlexMetadata`, `PlexMedia`, `PlexPart`, `PlexResource`).

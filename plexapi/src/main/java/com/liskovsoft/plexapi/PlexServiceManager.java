@@ -15,7 +15,7 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 
 /**
  * Fork-only entry point for Plex services.
- * Sign-in (Phase 1.3) is live; server/library/media remain stubs until 1.4–1.6.
+ * Sign-in and server discovery are live; library/media remain stubs until 1.5–1.6.
  */
 public final class PlexServiceManager implements com.liskovsoft.plexserviceinterfaces.PlexServiceManager {
     private static final String TAG = PlexServiceManager.class.getSimpleName();

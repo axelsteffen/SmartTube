@@ -63,6 +63,7 @@ public class PlexSignInServiceImpl implements PlexSignInService {
     @Override
     public void signOut() {
         prefs().clearAuthToken();
+        prefs().clearSelectedServer();
     }
 
     @Override

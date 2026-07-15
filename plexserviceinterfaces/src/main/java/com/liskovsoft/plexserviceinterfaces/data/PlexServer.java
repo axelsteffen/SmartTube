@@ -7,6 +7,12 @@ public interface PlexServer {
 
     String getBaseUrl();
 
+    /**
+     * Per-server token from plex.tv resources ({@code accessToken}).
+     * Prefer this for PMS calls over the account auth token.
+     */
+    String getAccessToken();
+
     boolean isOwned();
 
     boolean isOnline();
