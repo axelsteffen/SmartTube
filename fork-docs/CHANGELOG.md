@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`, `Video.mediaSource`, playback routing). Phase 3.1 done (enabled Plex sidebar section). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.2 done (sidebar + movie library rows via `PlexBrowsePresenter`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -31,6 +31,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../misc/PlexPlaybackHelper.java** (new): Resolves Plex `MediaItemFormatInfo` via `PlexServiceManager` + adapters for `Video.isPlex()`; uses `RxHelper` for IO/main scheduling (Phase 2.5).
 - **common/.../playback/controllers/VideoLoaderController.java**: Per-video Plex branch in `loadFormatInfo`; VOD HLS via `openHlsUrl` when `containsHlsUrl()` (Phase 2.5).
 - **common/.../playback/controllers/SuggestionsController.java**: Skip YouTube metadata/suggestions for Plex videos (Phase 2.5).
+- **common/.../presenters/PlexBrowsePresenter.java** (new): Loads Plex movie libraries as `MediaGroup` rows (sequential first-page fetch via `PlexMediaGroupAdapter`) for Browse UI (Phase 3.2).
+- **common/.../presenters/BrowsePresenter.java**: Registers `TYPE_PLEX` row mapping from `PlexBrowsePresenter` when Plex is enabled (Phase 3.2).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.

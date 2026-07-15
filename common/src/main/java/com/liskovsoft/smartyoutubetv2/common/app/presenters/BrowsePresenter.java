@@ -39,6 +39,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.AppDataSourceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 import com.liskovsoft.smartyoutubetv2.common.misc.SidebarSectionRegistry;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.AccountChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AccountsData;
@@ -232,6 +233,11 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
         mGridMapping.put(MediaGroup.TYPE_CHANNEL_UPLOADS, getContentService().getSubscribedChannelsByNewContentObserve());
         mGridMapping.put(MediaGroup.TYPE_NOTIFICATIONS, getNotificationsService().getNotificationItemsObserve());
         mGridMapping.put(MediaGroup.TYPE_MY_VIDEOS, getContentService().getMyVideosObserve());
+
+        // Fork: Plex movie libraries as rows (Phase 3.2)
+        if (MediaSourceRegistry.isPlexEnabled()) {
+            mRowMapping.put(SidebarSectionRegistry.TYPE_PLEX, PlexBrowsePresenter.getLibraryRowsObserve());
+        }
     }
 
     private void initPinnedSections() {
