@@ -18,6 +18,10 @@
     <string name="plex_no_server_selected">No server selected</string>
     <string name="plex_current_server">Server: %1$s</string>
     <string name="plex_transcode_fallback">Unsupported format — switching to Plex transcode</string>
+    <string name="plex_error_server_offline">Plex server is offline or unreachable</string>
+    <string name="plex_error_auth_expired">Plex sign-in expired — please sign in again</string>
+    <string name="plex_error_playback_failed">Unable to play this Plex video</string>
+    <string name="plex_error_load_failed">Unable to load Plex library</string>
     <string name="subscriptions_signin_title">See the latest from channels you love</string>
     <string name="subscriptions_signin_subtitle">Sign in to see your subscriptions</string>
     <string name="subscriptions_signin_button_text">SIGN IN</string>

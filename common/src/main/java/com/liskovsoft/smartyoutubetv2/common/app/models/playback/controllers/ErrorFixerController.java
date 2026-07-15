@@ -114,6 +114,9 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
         if (tryPlexTranscodeFallback(type, rendererIndex)) {
             return;
         }
+        if (handlePlexEngineError(type, rendererIndex, error)) {
+            return;
+        }
 
         boolean restartEngine = true;
         boolean showMessage = true;
@@ -248,6 +251,33 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
         return true;
     }
 
+    /**
+     * Phase 4.6: after transcode fallback is exhausted (or not applicable), show a clear
+     * Plex message and skip YouTube remediations (format switch, applyNoPlaybackFix, etc.).
+     */
+    private boolean handlePlexEngineError(int type, int rendererIndex, Throwable error) {
+        Video video = getVideo();
+        if (video == null || !video.isPlex()) {
+            return false;
+        }
+
+        if (type == PlayerEventListener.ERROR_TYPE_RENDERER
+                && rendererIndex == PlayerEventListener.RENDERER_INDEX_SUBTITLE) {
+            disableSubtitles();
+            mVideoLoaderController.reloadVideo();
+            return true;
+        }
+
+        String msg = PlexPlaybackHelper.getUserMessage(getContext(), error);
+        Log.e(TAG, "Plex engine error (type=%s renderer=%s): %s",
+                type, rendererIndex, error != null ? error.getMessage() : null);
+        MessageHelpers.showLongMessage(getContext(), msg);
+        if (getPlayer() != null) {
+            getPlayer().setTitle(msg);
+        }
+        return true;
+    }
+
     @SuppressLint("StringFormatMatches")
     private String getErrorTitle(int type, int rendererIndex) {
         String errorTitle;
@@ -306,6 +336,17 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
         if (isEmbedPlayer()) {
             getPlayer().finish();
+            return;
+        }
+
+        Video video = getVideo();
+        if (video != null && video.isPlex()) {
+            // Phase 4.6: no YouTube fixes / reload loops for Plex format resolve
+            String msg = PlexPlaybackHelper.getUserMessage(getContext(), error);
+            Log.e(TAG, "Plex loadFormatInfo error: %s", error != null ? error.getMessage() : null);
+            MessageHelpers.showLongMessage(getContext(), msg);
+            getPlayer().setTitle(msg);
+            getPlayer().showProgressBar(false);
             return;
         }
 

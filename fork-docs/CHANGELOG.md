@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Phase 4.4 done (disable YouTube-only features for Plex). Phase 4.5 done (Direct Play → forced HLS transcode on engine error). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Phase 4.4 done (disable YouTube-only features for Plex). Phase 4.5 done (Direct Play → forced HLS transcode on engine error). Phase 4.6 done (Plex error classification + skip YT remediations). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -63,6 +63,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../playback/controllers/VideoLoaderController.java**: `reloadPlexTranscode()`; clear Plex session on `onNewVideo` (Phase 4.5).
 - **common/.../playback/controllers/ErrorFixerController.java**: On Plex SOURCE/RENDERER/UNEXPECTED errors, once retry via forced HLS transcode (Phase 4.5).
 - **common/src/main/res/values/strings.xml**: `plex_transcode_fallback` (Phase 4.5).
+- **common/.../misc/PlexPlaybackHelper.java**: `classifyError` / `getUserMessage` for AUTH / OFFLINE / GENERIC (Phase 4.6).
+- **common/.../playback/controllers/ErrorFixerController.java**: Plex format/engine errors → user toast, no YT fixes/reload loops (Phase 4.6).
+- **common/.../presenters/BrowsePresenter.java**: Plex section load errors → `PlexSignInError` / `PlexMessageError` (Phase 4.6).
+- **common/.../errors/PlexMessageError.java** (new): Browse error fragment with short Plex message (Phase 4.6).
+- **common/src/main/res/values/strings.xml**: `plex_error_server_offline`, `plex_error_auth_expired`, `plex_error_playback_failed`, `plex_error_load_failed` (Phase 4.6).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.

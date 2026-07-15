@@ -13,13 +13,20 @@ import com.liskovsoft.plexserviceinterfaces.PlexMediaService;
 import com.liskovsoft.plexserviceinterfaces.data.PlexAudioTrack;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
+import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
+import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -28,10 +35,17 @@ import io.reactivex.disposables.Disposable;
  * Fork-only: resolves {@link MediaItemFormatInfo} for Plex {@link Video}s
  * so {@code VideoLoaderController} can open Direct Play / HLS via ExoPlayer.
  * Also syncs resume progress (4.1), audio track session state (4.3),
- * and forced transcode fallback (4.5).
+ * forced transcode fallback (4.5), and user-facing error classification (4.6).
  */
 public final class PlexPlaybackHelper {
     private static final String TAG = PlexPlaybackHelper.class.getSimpleName();
+
+    /** Coarse classification for Plex playback / browse failures (Phase 4.6). */
+    public enum ErrorKind {
+        AUTH,
+        OFFLINE,
+        GENERIC
+    }
 
     @Nullable
     private static Disposable sProgressAction;
@@ -319,5 +333,101 @@ public final class PlexPlaybackHelper {
                 video.getDurationMs() > 0 ? video.getDurationMs() : 0L,
                 video.cardImageUrl,
                 0);
+    }
+
+    /**
+     * Classifies a Plex failure for user messaging (Phase 4.6).
+     * Walks the cause chain; no YouTube-specific remediation hints.
+     */
+    public static ErrorKind classifyError(@Nullable Throwable error) {
+        Throwable t = error;
+        while (t != null) {
+            if (t instanceof UnknownHostException
+                    || t instanceof ConnectException
+                    || t instanceof SocketTimeoutException
+                    || t instanceof NoRouteToHostException) {
+                return ErrorKind.OFFLINE;
+            }
+            // Avoid compile dependency on retrofit2; match by type name + message
+            if ("HttpException".equals(t.getClass().getSimpleName())) {
+                int code = httpStatusCode(t);
+                if (code == 401 || code == 403) {
+                    return ErrorKind.AUTH;
+                }
+            }
+            String msg = t.getMessage();
+            if (msg != null && !msg.isEmpty()) {
+                String lower = msg.toLowerCase(Locale.US);
+                if (Helpers.containsAny(msg, "HTTP 401", "HTTP 403", "Response code: 401",
+                        "Response code: 403", "Unauthorized", "401 Unauthorized", "403 Forbidden")
+                        || lower.contains("unauthorized")) {
+                    return ErrorKind.AUTH;
+                }
+                if (Helpers.containsAny(lower,
+                        "unable to resolve host",
+                        "failed to connect",
+                        "connection refused",
+                        "network is unreachable",
+                        "no address associated",
+                        "software caused connection abort",
+                        "timed out",
+                        "timeout")) {
+                    return ErrorKind.OFFLINE;
+                }
+            }
+            t = t.getCause();
+        }
+        return ErrorKind.GENERIC;
+    }
+
+    /** Best-effort HTTP status from Retrofit {@code HttpException} without a compile dep. */
+    private static int httpStatusCode(Throwable t) {
+        try {
+            Object code = t.getClass().getMethod("code").invoke(t);
+            if (code instanceof Integer) {
+                return (Integer) code;
+            }
+        } catch (Throwable ignored) {
+            // fall through to message parsing
+        }
+        String msg = t.getMessage();
+        if (msg != null) {
+            // e.g. "HTTP 401 Unauthorized"
+            int idx = msg.indexOf("HTTP ");
+            if (idx >= 0 && msg.length() >= idx + 8) {
+                try {
+                    return Integer.parseInt(msg.substring(idx + 5, idx + 8).trim());
+                } catch (NumberFormatException ignored) {
+                    // ignore
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** User-facing playback error string for {@code error}. */
+    public static String getUserMessage(@Nullable Context context, @Nullable Throwable error) {
+        return getUserMessage(context, error, false);
+    }
+
+    /**
+     * @param browse when true, GENERIC uses the library-load string instead of playback-failed
+     */
+    public static String getUserMessage(
+            @Nullable Context context, @Nullable Throwable error, boolean browse) {
+        if (context == null) {
+            return "";
+        }
+        switch (classifyError(error)) {
+            case AUTH:
+                return context.getString(R.string.plex_error_auth_expired);
+            case OFFLINE:
+                return context.getString(R.string.plex_error_server_offline);
+            case GENERIC:
+            default:
+                return context.getString(browse
+                        ? R.string.plex_error_load_failed
+                        : R.string.plex_error_playback_failed);
+        }
     }
 }

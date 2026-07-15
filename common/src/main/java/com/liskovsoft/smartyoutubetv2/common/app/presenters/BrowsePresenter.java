@@ -23,6 +23,8 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.CategoryEmptyError;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.PasswordError;
+import com.liskovsoft.smartyoutubetv2.common.app.models.errors.PlexMessageError;
+import com.liskovsoft.smartyoutubetv2.common.app.models.errors.PlexSignInError;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.SignInError;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService.State;
@@ -40,6 +42,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.AppDataSourceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 import com.liskovsoft.smartyoutubetv2.common.misc.SidebarSectionRegistry;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.AccountChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AccountsData;
@@ -1209,7 +1212,18 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
 
         if (getView().isEmpty() || error != null) {
             ErrorFragmentData errorFragmentData;
-            if (error != null && !Helpers.containsAny(error.getMessage(), "fromNullable result is null")) {
+            boolean isPlexSection = mCurrentSection != null
+                    && mCurrentSection.getId() == SidebarSectionRegistry.TYPE_PLEX;
+
+            if (isPlexSection && error != null) {
+                // Phase 4.6: clear Plex messages; auth → sign-in / server picker
+                if (PlexPlaybackHelper.classifyError(error) == PlexPlaybackHelper.ErrorKind.AUTH) {
+                    errorFragmentData = new PlexSignInError(getContext());
+                } else {
+                    errorFragmentData = new PlexMessageError(
+                            PlexPlaybackHelper.getUserMessage(getContext(), error, true));
+                }
+            } else if (error != null && !Helpers.containsAny(error.getMessage(), "fromNullable result is null")) {
                 errorFragmentData = new CategoryEmptyError(getContext(), error);
             } else if (getSignInService().isSigned()) {
                 errorFragmentData = new CategoryEmptyError(getContext(), null);
@@ -1219,7 +1233,8 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
 
             // TODO: should we find a better place e.g. RetrofitHelper
             // java.net.UnknownHostException: Unable to resolve host "www.youtube.com": No address associated with hostname
-            if (error != null && Helpers.contains(error.getMessage(), "No address associated with hostname")) {
+            if (!isPlexSection && error != null
+                    && Helpers.contains(error.getMessage(), "No address associated with hostname")) {
                 PlayerTweaksData playerTweaksData = PlayerTweaksData.instance(getContext());
                 if (playerTweaksData.getPreferredDnsType() != PlayerTweaksData.DNS_TYPE_IPV4) {
                     playerTweaksData.setPreferredDnsType(PlayerTweaksData.DNS_TYPE_IPV4);
