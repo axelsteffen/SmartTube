@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
