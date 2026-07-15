@@ -30,6 +30,7 @@ import com.liskovsoft.smartyoutubetv2.common.proxy.ProxyManager;
 import com.liskovsoft.smartyoutubetv2.common.utils.IntentExtractor;
 import com.liskovsoft.smartyoutubetv2.common.utils.SimpleEditDialog;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
+import com.liskovsoft.leanbackassistant.misc.ServiceManagerProvider;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 
 import java.util.ArrayList;
@@ -89,6 +90,8 @@ public class SplashPresenter extends BasePresenter<SplashView> {
         if (!sRunOnce) {
             sRunOnce = true;
             RxHelper.setupGlobalErrorHandler();
+            // Wire ATV leanbackassistant to MediaSourceRegistry (avoids circular Gradle dep).
+            ServiceManagerProvider.init(MediaSourceRegistry.getServiceManager());
             initGlobalPrefs();
             initProxy();
             initVideoStateService();

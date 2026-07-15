@@ -63,13 +63,22 @@ See [MediaServiceCore/CHANGELOG_FORK.md](../MediaServiceCore/CHANGELOG_FORK.md).
 
 ### leanbackassistant
 
-Unchanged: still uses `YouTubeServiceManager` directly (circular dep with `common` / `MediaSourceRegistry`). Candidate for Phase 5.3 if a dependency-safe approach is found.
+| File / area | Fork change | Merge hint |
+|-------------|-------------|------------|
+| `leanbackassistant/.../misc/ServiceManagerProvider.java` | Fork-only holder (Phase 5.3) | Keep entirely |
+| `VideoContentProvider.java`, `Playlist.java` | Use `ServiceManagerProvider.get()` | Keep; no direct `YouTubeServiceManager` at call sites |
+| Init from `SplashPresenter` | `ServiceManagerProvider.init(MediaSourceRegistry.getServiceManager())` | Keep init in `common` |
+
+ATV search/channels remain YouTube-backed. Fallback inside provider still uses `YouTubeServiceManager` until splash init.
 
 ---
 
 ## [Unreleased]
 
 ### fork-docs
+- **fork-docs/CHANGELOG.md** / **milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 5.3 done — leanbackassistant routed via `ServiceManagerProvider`.
+- **fork-docs/CHANGELOG.md**: Phase 5.2 — Upstream merge test 2026-07-15: `merge-upstream.sh --fetch-only` → SharedModules / MediaServiceCore / SmartTube all **0 behind** upstream (no merge needed after Phase 4 polish + 5.1 docs). Smoke: `:common:compileStbetaDebugJavaWithJavac` OK. (`:plexapi:testStbetaDebugUnitTest` still hits pre-existing `RoboCookieManager` classpath failures — not an upstream-merge regression.)
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.2 marked done.
 - **fork-docs/CHANGELOG.md**: Phase 5.1 — added stable **Fork Touch Points** section (upstream hotspots + fork-only modules + MSC summary).
 - **.cursor/skills/upstream-merge/reference.md**: Synced Known Fork Touch Points with Phase 5.1 list (removed “planned” Plex stub).
 - **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.1 marked done; Phase 5 progress split per step.
@@ -82,6 +91,7 @@ Unchanged: still uses `YouTubeServiceManager` directly (circular dep with `commo
 - **fork-docs/scripts/merge-upstream.sh** (new): Fetch and merge helper for SmartTube, MediaServiceCore, and SharedModules.
 
 ### common
+- **common/.../presenters/SplashPresenter.java**: `ServiceManagerProvider.init(MediaSourceRegistry.getServiceManager())` in `runOnceTasks` (Phase 5.3).
 - **common/src/main/java/.../misc/MediaSourceRegistry.java** (new): Fork-only registry for media sources (`YOUTUBE`, `PLEX`). Central `getServiceManager()` accessor; Plex disabled until Phase 1.
 - **common/** (24 files): Replaced direct `YouTubeServiceManager.instance()` with `MediaSourceRegistry.getServiceManager()` in presenters, playback controllers, and misc services.
 - **common/.../misc/SidebarSectionRegistry.java** (new): Fork-only sidebar extension point for extra sections (id ≥ 100). Phase 3.1: when Plex enabled + auth/server ready → `TYPE_ROW`; else `TYPE_ERROR` with `PlexSignInError`; disabled flag still uses `PlexDisabledError`.
@@ -221,7 +231,8 @@ Unchanged: still uses `YouTubeServiceManager` directly (circular dep with `commo
 - **plexapi/src/test/.../PlexMediaServiceImplTest.java**: Force-transcode unit test (Phase 4.5).
 
 ### leanbackassistant
-- _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_
+- **leanbackassistant/.../misc/ServiceManagerProvider.java** (new): Holds `ServiceManager` for ATV helpers; fallback to `YouTubeServiceManager` until init (Phase 5.3). Avoids circular dep on `common` / `MediaSourceRegistry`.
+- **leanbackassistant/.../search/VideoContentProvider.java**, **.../media/Playlist.java**: Use `ServiceManagerProvider.get()` instead of direct `YouTubeServiceManager` call sites (Phase 5.3).
 
 ### MediaServiceCore (summary)
 - See [MediaServiceCore/CHANGELOG_FORK.md](../MediaServiceCore/CHANGELOG_FORK.md) for full detail.

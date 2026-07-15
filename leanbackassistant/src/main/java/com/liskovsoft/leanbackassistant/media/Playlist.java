@@ -23,7 +23,7 @@ import com.liskovsoft.mediaserviceinterfaces.ServiceManager;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
 import com.liskovsoft.sharedutils.helpers.Helpers;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.leanbackassistant.misc.ServiceManagerProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -174,7 +174,7 @@ public final class Playlist {
             return null;
         }
 
-        ServiceManager service = YouTubeServiceManager.instance();
+        ServiceManager service = ServiceManagerProvider.get();
         ContentService contentService = service.getContentService();
         MediaGroup selectedGroup = mCallback.call(contentService);
 

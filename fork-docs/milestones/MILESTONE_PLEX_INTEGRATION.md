@@ -13,7 +13,7 @@ Play Plex media (primarily own library on Plex Media Server) inside SmartTube wi
 | `common/` / `smarttubetv/` | Hardcoded `YouTubeServiceManager.instance()` (~30 places) |
 | Playback | ExoPlayer, source-agnostic (HLS/DASH/MP4) |
 | MediaServiceCore fork | Category field in interfaces + OpenAPI spec |
-| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) + audio track selection (4.3) + YT-only feature gates (4.4) + Direct Play → transcode fallback (4.5) + error handling (4.6) + fork touch points documented (5.1) |
+| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) + audio track selection (4.3) + YT-only feature gates (4.4) + Direct Play → transcode fallback (4.5) + error handling (4.6) + fork touch points documented (5.1) + upstream merge test (5.2) + leanback `ServiceManagerProvider` (5.3) |
 
 ## Architecture Principles
 
@@ -156,8 +156,8 @@ SmartTube/                          (Fork)
 | 4 | 4.5 Transcode fallback | done |
 | 4 | 4.6 Error handling | done |
 | 5 | 5.1 Document fork touch points in CHANGELOG | done |
-| 5 | 5.2 Upstream merge test | open |
-| 5 | 5.3 Reduce direct `YouTubeServiceManager` usages | open |
+| 5 | 5.2 Upstream merge test | done |
+| 5 | 5.3 Reduce direct `YouTubeServiceManager` usages | done |
 | 5 | 5.4 Optional: extract to `PlexServiceCore` submodule | open |
 
 ## Rough Effort

@@ -70,7 +70,11 @@ Canonical copy (with more detail): [fork-docs/CHANGELOG.md § Fork Touch Points]
 
 ### leanbackassistant
 
-Still calls `YouTubeServiceManager` directly (circular dep blocks `MediaSourceRegistry`). Leave as-is unless Phase 5.3 finds a safe path.
+| File / area | Fork change |
+|-------------|-------------|
+| `.../misc/ServiceManagerProvider.java` | Fork-only holder; fallback `YouTubeServiceManager` |
+| `VideoContentProvider.java`, `Playlist.java` | `ServiceManagerProvider.get()` |
+| `SplashPresenter` (in `common`) | `ServiceManagerProvider.init(MediaSourceRegistry…)` |
 
 ## Submodule Pointer Update
 
