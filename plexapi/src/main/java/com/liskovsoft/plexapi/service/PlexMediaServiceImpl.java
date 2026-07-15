@@ -34,7 +34,7 @@ import retrofit2.Response;
 
 /**
  * Resolves playable stream URLs, external subtitles, audio track preference,
- * and reports playback progress (Phase 1.6 / 4.1 / 4.2 / 4.3).
+ * progress sync, and forced transcode fallback (Phase 1.6 / 4.1–4.5).
  */
 public class PlexMediaServiceImpl implements PlexMediaService {
     private static final String TAG = PlexMediaServiceImpl.class.getSimpleName();
@@ -58,14 +58,23 @@ public class PlexMediaServiceImpl implements PlexMediaService {
 
     @Override
     public Observable<PlexStreamInfo> getStreamInfoObserve(PlexMediaItem item) {
-        return getStreamInfoObserve(item, null, null);
+        return getStreamInfoObserve(item, null, null, false);
     }
 
     @Override
     public Observable<PlexStreamInfo> getStreamInfoObserve(
             PlexMediaItem item, Long audioStreamId, String preferredLanguage) {
+        return getStreamInfoObserve(item, audioStreamId, preferredLanguage, false);
+    }
+
+    @Override
+    public Observable<PlexStreamInfo> getStreamInfoObserve(
+            PlexMediaItem item,
+            Long audioStreamId,
+            String preferredLanguage,
+            boolean forceTranscode) {
         return Observable.fromCallable(
-                () -> fetchStreamInfo(item, audioStreamId, preferredLanguage));
+                () -> fetchStreamInfo(item, audioStreamId, preferredLanguage, forceTranscode));
     }
 
     @Override
@@ -81,7 +90,10 @@ public class PlexMediaServiceImpl implements PlexMediaService {
     }
 
     private PlexStreamInfo fetchStreamInfo(
-            PlexMediaItem item, Long audioStreamId, String preferredLanguage) throws IOException {
+            PlexMediaItem item,
+            Long audioStreamId,
+            String preferredLanguage,
+            boolean forceTranscode) throws IOException {
         if (item == null || item.getRatingKey() == null || item.getRatingKey().isEmpty()) {
             throw new IllegalArgumentException("item with ratingKey required");
         }
@@ -100,27 +112,32 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         List<PlexAudioTrack> audioTracks = collectAudioTracks(metaContainer);
         long selectedAudioId = pickAudioStreamId(audioTracks, audioStreamId, preferredLanguage);
 
-        PlexPart directPart = firstPartWithKey(metaContainer);
-        if (directPart != null) {
-            String url = PlexUrlHelper.absoluteUrl(baseUrl, directPart.getKey(), token);
-            String container = directPart.getContainer();
-            if (container == null || container.isEmpty()) {
-                container = firstMediaContainer(metaContainer);
+        if (!forceTranscode) {
+            PlexPart directPart = firstPartWithKey(metaContainer);
+            if (directPart != null) {
+                String url = PlexUrlHelper.absoluteUrl(baseUrl, directPart.getKey(), token);
+                String container = directPart.getContainer();
+                if (container == null || container.isEmpty()) {
+                    container = firstMediaContainer(metaContainer);
+                }
+                Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey()
+                        + " subtitles=" + subtitles.size()
+                        + " audioTracks=" + audioTracks.size()
+                        + " preferredAudio=" + selectedAudioId);
+                return new PlexStreamInfoImpl(
+                        url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs,
+                        subtitles, audioTracks, selectedAudioId);
             }
-            Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey()
-                    + " subtitles=" + subtitles.size()
-                    + " audioTracks=" + audioTracks.size()
-                    + " preferredAudio=" + selectedAudioId);
-            return new PlexStreamInfoImpl(
-                    url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs,
-                    subtitles, audioTracks, selectedAudioId);
+            Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey()
+                    + " audioStreamID=" + selectedAudioId);
+        } else {
+            Log.d(TAG, "Force transcode for ratingKey=" + item.getRatingKey()
+                    + " audioStreamID=" + selectedAudioId);
         }
 
-        Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey()
-                + " audioStreamID=" + selectedAudioId);
         return resolveViaDecision(
                 api, item.getRatingKey(), baseUrl, token, viewOffsetMs,
-                subtitles, audioTracks, selectedAudioId);
+                subtitles, audioTracks, selectedAudioId, forceTranscode);
     }
 
     private void reportTimeline(PlexMediaItem item, long positionMs, long durationMs, String state)
@@ -170,11 +187,14 @@ public class PlexMediaServiceImpl implements PlexMediaService {
             long viewOffsetMs,
             List<PlexSubtitle> subtitles,
             List<PlexAudioTrack> audioTracks,
-            long selectedAudioId) throws IOException {
+            long selectedAudioId,
+            boolean forceTranscode) throws IOException {
         String path = "/library/metadata/" + ratingKey;
         Long audioQuery = selectedAudioId > 0L ? selectedAudioId : null;
+        int directPlay = forceTranscode ? 0 : 1;
+        int directStream = forceTranscode ? 0 : 1;
         Response<MediaContainerResponse> decisionResponse = api.getPlaybackDecision(
-                path, 1, 1, "hls", 0, 0, audioQuery, token).execute();
+                path, directPlay, directStream, "hls", 0, 0, audioQuery, token).execute();
         MediaContainer decisionContainer =
                 requireContainer(decisionResponse, "playback decision for " + ratingKey);
 
@@ -183,7 +203,7 @@ public class PlexMediaServiceImpl implements PlexMediaService {
             throw new IOException("Playback decision returned no Part.key for " + ratingKey);
         }
 
-        boolean transcoded = isTranscodeDecision(part.getDecision());
+        boolean transcoded = forceTranscode || isTranscodeDecision(part.getDecision());
         String url = PlexUrlHelper.absoluteUrl(baseUrl, part.getKey(), token);
         String hintSource = part.getProtocol();
         if (hintSource == null || hintSource.isEmpty()) {
@@ -194,7 +214,8 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         }
 
         Log.d(TAG, "Decision stream for ratingKey=" + ratingKey
-                + " transcoded=" + transcoded + " decision=" + part.getDecision()
+                + " transcoded=" + transcoded + " force=" + forceTranscode
+                + " decision=" + part.getDecision()
                 + " subtitles=" + subtitles.size()
                 + " audioStreamID=" + selectedAudioId);
         return new PlexStreamInfoImpl(

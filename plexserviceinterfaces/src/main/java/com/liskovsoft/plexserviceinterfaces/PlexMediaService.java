@@ -30,6 +30,18 @@ public interface PlexMediaService {
             @Nullable String preferredLanguage);
 
     /**
+     * Resolves stream URL with optional audio override and forced transcode (Phase 4.5).
+     *
+     * @param forceTranscode when {@code true}, skip Direct Play and request HLS via decision
+     *                       with {@code directPlay=0}/{@code directStream=0}
+     */
+    Observable<PlexStreamInfo> getStreamInfoObserve(
+            PlexMediaItem item,
+            @Nullable Long audioStreamId,
+            @Nullable String preferredLanguage,
+            boolean forceTranscode);
+
+    /**
      * Reports playback progress to PMS ({@code /:/timeline}).
      *
      * @param positionMs current position in ms

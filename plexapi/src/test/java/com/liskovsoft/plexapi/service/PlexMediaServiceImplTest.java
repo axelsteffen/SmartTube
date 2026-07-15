@@ -140,6 +140,59 @@ public class PlexMediaServiceImplTest {
     }
 
     @Test
+    public void getStreamInfoObserve_forceTranscodeSkipsDirectPlay() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"1049\","
+                + "\"key\":\"/library/metadata/1049\","
+                + "\"Media\":[{"
+                + "\"container\":\"mkv\","
+                + "\"Part\":[{"
+                + "\"id\":827,"
+                + "\"key\":\"/library/parts/827/file.mkv\","
+                + "\"container\":\"mkv\""
+                + "}]"
+                + "}]"
+                + "}]"
+                + "}}"));
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"Media\":[{"
+                + "\"Part\":[{"
+                + "\"key\":\"/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F1049\","
+                + "\"decision\":\"transcode\","
+                + "\"protocol\":\"hls\""
+                + "}]"
+                + "}]"
+                + "}]"
+                + "}}"));
+
+        PlexStreamInfo stream = mService
+                .getStreamInfoObserve(movie("1049"), null, null, true)
+                .blockingFirst();
+
+        assertTrue(stream.isTranscoded());
+        assertEquals("application/x-mpegURL", stream.getContainer());
+        assertTrue(stream.getUrl().contains("transcode/universal/start.m3u8"));
+
+        RecordedRequest meta = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(meta);
+        assertTrue(meta.getPath().contains("library/metadata/1049"));
+
+        RecordedRequest decision = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(decision);
+        String path = decision.getPath();
+        assertNotNull(path);
+        assertTrue(path.contains("video/:/transcode/universal/decision"));
+        assertTrue(path.contains("directPlay=0"));
+        assertTrue(path.contains("directStream=0"));
+        assertTrue(path.contains("protocol=hls"));
+        assertEquals(2, mServer.getRequestCount());
+    }
+
+    @Test
     public void getStreamInfoObserve_requiresRatingKey() {
         try {
             mService.getStreamInfoObserve(new PlexMediaItemImpl(

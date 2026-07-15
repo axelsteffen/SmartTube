@@ -27,7 +27,8 @@ import io.reactivex.disposables.Disposable;
 /**
  * Fork-only: resolves {@link MediaItemFormatInfo} for Plex {@link Video}s
  * so {@code VideoLoaderController} can open Direct Play / HLS via ExoPlayer.
- * Also syncs resume progress (4.1) and audio track session state (4.3).
+ * Also syncs resume progress (4.1), audio track session state (4.3),
+ * and forced transcode fallback (4.5).
  */
 public final class PlexPlaybackHelper {
     private static final String TAG = PlexPlaybackHelper.class.getSimpleName();
@@ -38,6 +39,13 @@ public final class PlexPlaybackHelper {
     /** Transient override for next format resolve (HLS audio switch). */
     @Nullable
     private static Long sOverrideAudioStreamId;
+
+    /** Transient: next resolve skips Direct Play and forces HLS transcode (4.5). */
+    private static boolean sForceTranscode;
+
+    /** Rating key for which a force-transcode fallback was already requested (no loops). */
+    @Nullable
+    private static String sTranscodeFallbackRatingKey;
 
     @Nullable
     private static PlaybackSession sSession;
@@ -91,6 +99,7 @@ public final class PlexPlaybackHelper {
         }
 
         Long overrideAudioId = consumeOverrideAudioStreamId();
+        boolean forceTranscode = consumeForceTranscode();
         String preferredLanguage = null;
         if (context != null) {
             preferredLanguage = PlayerData.instance(context).getAudioLanguage();
@@ -100,11 +109,13 @@ public final class PlexPlaybackHelper {
         }
         final String preferredLangFinal = preferredLanguage;
         final Long overrideFinal = overrideAudioId;
+        final boolean forceTranscodeFinal = forceTranscode;
 
         return RxHelper.fromCallable(() -> {
             PlexStreamInfo stream = PlexServiceManager.instance()
                     .getMediaService()
-                    .getStreamInfoObserve(item, overrideFinal, preferredLangFinal)
+                    .getStreamInfoObserve(
+                            item, overrideFinal, preferredLangFinal, forceTranscodeFinal)
                     .blockingFirst();
             applyViewOffset(video, stream);
             rememberSession(item.getRatingKey(), stream, preferredLangFinal);
@@ -129,11 +140,55 @@ public final class PlexPlaybackHelper {
         return id;
     }
 
+    /**
+     * True when Direct Play failed once and we have not yet forced transcode for this item.
+     */
+    public static boolean canAttemptTranscodeFallback(@Nullable Video video) {
+        if (video == null || !video.isPlex()) {
+            return false;
+        }
+        String ratingKey = video.videoId;
+        if (ratingKey == null || ratingKey.isEmpty()) {
+            return false;
+        }
+        if (ratingKey.equals(sTranscodeFallbackRatingKey)) {
+            return false;
+        }
+        if (sSession != null
+                && ratingKey.equals(sSession.ratingKey)
+                && sSession.transcoded) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Requests forced HLS transcode on the next format resolve (Phase 4.5).
+     * Marks the rating key so fallback is attempted at most once per item.
+     */
+    public static void requestForceTranscode(@Nullable Video video) {
+        sForceTranscode = true;
+        if (video != null && video.videoId != null && !video.videoId.isEmpty()) {
+            sTranscodeFallbackRatingKey = video.videoId;
+        }
+    }
+
+    private static boolean consumeForceTranscode() {
+        boolean force = sForceTranscode;
+        sForceTranscode = false;
+        return force;
+    }
+
     private static void rememberSession(
             String ratingKey, PlexStreamInfo stream, @Nullable String preferredLanguage) {
         if (stream == null) {
             sSession = null;
             return;
+        }
+        if (sSession != null
+                && ratingKey != null
+                && !ratingKey.equals(sSession.ratingKey)) {
+            sTranscodeFallbackRatingKey = null;
         }
         String preferred = preferredLanguage;
         if ((preferred == null || preferred.isEmpty())
@@ -156,6 +211,8 @@ public final class PlexPlaybackHelper {
     public static void clearSession() {
         sSession = null;
         sOverrideAudioStreamId = null;
+        sForceTranscode = false;
+        sTranscodeFallbackRatingKey = null;
     }
 
     @Nullable

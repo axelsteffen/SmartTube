@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Phase 4.4 done (disable YouTube-only features for Plex). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Phase 4.4 done (disable YouTube-only features for Plex). Phase 4.5 done (Direct Play → forced HLS transcode on engine error). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -59,6 +59,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../playback/controllers/PlayerUIController.java**: Skip Like/Dislike/Subscribe metadata + clicks for Plex (Phase 4.4).
 - **common/.../playback/controllers/CommentsController.java**: Skip comments dialog for Plex (Phase 4.4).
 - **common/.../playback/controllers/ChatController.java**: Skip live chat for Plex (Phase 4.4).
+- **common/.../misc/PlexPlaybackHelper.java**: Force-transcode one-shot flag + `canAttemptTranscodeFallback` (Phase 4.5).
+- **common/.../playback/controllers/VideoLoaderController.java**: `reloadPlexTranscode()`; clear Plex session on `onNewVideo` (Phase 4.5).
+- **common/.../playback/controllers/ErrorFixerController.java**: On Plex SOURCE/RENDERER/UNEXPECTED errors, once retry via forced HLS transcode (Phase 4.5).
+- **common/src/main/res/values/strings.xml**: `plex_transcode_fallback` (Phase 4.5).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -69,6 +73,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexserviceinterfaces/.../data/PlexBackedMediaItem.java** (new): Marker interface so `Video.from` can tag Plex without depending on plexapi (Phase 2.4).
 - **plexserviceinterfaces/.../data/PlexMediaPage.java** (new): Paginated library/children page contract (Phase 3.4).
 - **plexserviceinterfaces/.../PlexLibraryService.java**: `getMoviesPageObserve`, `getShowsPageObserve`, `getChildrenPageObserve` (Phase 3.4).
+- **plexserviceinterfaces/.../PlexMediaService.java**: `getStreamInfoObserve(..., forceTranscode)` (Phase 4.5).
 
 ### plexapi
 - **plexapi/** (new): Fork-only Plex API implementation module (Retrofit deps). Entry point `com.liskovsoft.plexapi.PlexServiceManager`.
@@ -142,6 +147,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../media/PlexStreamInfoImpl.java**: Carry audio tracks + selected id (Phase 4.3).
 - **plexapi/openapi-plex-pms-in-use.yaml**: Stream `channels` + decision audioStreamID note (Phase 4.3).
 - **plexapi/src/test/...**: Audio collect/pick unit tests (Phase 4.3).
+- **plexapi/.../service/PlexMediaServiceImpl.java**: Skip Direct Play when forced; decision with `directPlay=0`/`directStream=0` (Phase 4.5).
+- **plexapi/openapi-plex-pms-in-use.yaml**: Force-transcode decision note (Phase 4.5).
+- **plexapi/src/test/.../PlexMediaServiceImplTest.java**: Force-transcode unit test (Phase 4.5).
 
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_

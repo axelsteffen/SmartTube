@@ -16,6 +16,7 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 
 import java.util.List;
 
@@ -110,6 +111,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     }
 
     private void applyEngineErrorAction(int type, int rendererIndex, Throwable error) {
+        if (tryPlexTranscodeFallback(type, rendererIndex)) {
+            return;
+        }
+
         boolean restartEngine = true;
         boolean showMessage = true;
         String errorContent = error != null ? error.getMessage() : null;
@@ -213,6 +218,34 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             // Need at least to reload the video because the player becomes idle after error
             mVideoLoaderController.reloadVideo();
         }
+    }
+
+    /**
+     * Phase 4.5: on Direct Play failure, retry once via forced PMS HLS transcode.
+     */
+    private boolean tryPlexTranscodeFallback(int type, int rendererIndex) {
+        Video video = getVideo();
+        if (video == null || !video.isPlex()) {
+            return false;
+        }
+        if (type == PlayerEventListener.ERROR_TYPE_RENDERER
+                && rendererIndex == PlayerEventListener.RENDERER_INDEX_SUBTITLE) {
+            return false;
+        }
+        if (type != PlayerEventListener.ERROR_TYPE_SOURCE
+                && type != PlayerEventListener.ERROR_TYPE_RENDERER
+                && type != PlayerEventListener.ERROR_TYPE_UNEXPECTED) {
+            return false;
+        }
+        if (!PlexPlaybackHelper.canAttemptTranscodeFallback(video)) {
+            return false;
+        }
+
+        Log.e(TAG, "Plex Direct Play failed; forcing transcode (type=%s renderer=%s)",
+                type, rendererIndex);
+        MessageHelpers.showMessage(getContext(), R.string.plex_transcode_fallback);
+        mVideoLoaderController.reloadPlexTranscode();
+        return true;
     }
 
     @SuppressLint("StringFormatMatches")

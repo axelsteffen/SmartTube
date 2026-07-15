@@ -81,6 +81,9 @@ public class VideoLoaderController extends BasePlayerController {
             return;
         }
 
+        // Reset Plex audio/transcode session between videos (Phase 4.3 / 4.5)
+        PlexPlaybackHelper.clearSession();
+
         item.isShuffled = false;
 
         if (!item.fromQueue && !item.belongsToPlaybackQueue()) {
@@ -397,6 +400,36 @@ public class VideoLoaderController extends BasePlayerController {
             return;
         }
 
+        preservePlaybackPosition(video, player);
+
+        PlexPlaybackHelper.setOverrideAudioStreamId(audioStreamId);
+        Log.d(TAG, "Reloading Plex with audioStreamID=" + audioStreamId
+                + " positionMs=" + player.getPositionMs());
+        loadFormatInfo(video);
+    }
+
+    /**
+     * Reloads Plex after Direct Play failure with forced HLS transcode, preserving position.
+     * Phase 4.5.
+     */
+    public void reloadPlexTranscode() {
+        Video video = getVideo();
+        PlaybackView player = getPlayer();
+        if (video == null || !video.isPlex() || player == null) {
+            return;
+        }
+        if (!PlexPlaybackHelper.canAttemptTranscodeFallback(video)) {
+            return;
+        }
+
+        preservePlaybackPosition(video, player);
+        PlexPlaybackHelper.requestForceTranscode(video);
+        Log.d(TAG, "Reloading Plex with forced transcode for ratingKey=" + video.videoId
+                + " positionMs=" + player.getPositionMs());
+        loadFormatInfo(video);
+    }
+
+    private static void preservePlaybackPosition(Video video, PlaybackView player) {
         long positionMs = player.getPositionMs();
         if (positionMs > 0L) {
             video.startTimeSeconds = (int) (positionMs / 1000L);
@@ -405,11 +438,6 @@ public class VideoLoaderController extends BasePlayerController {
                 video.percentWatched = Math.min(100f, (positionMs * 100f) / durationMs);
             }
         }
-
-        PlexPlaybackHelper.setOverrideAudioStreamId(audioStreamId);
-        Log.d(TAG, "Reloading Plex with audioStreamID=" + audioStreamId
-                + " positionMs=" + positionMs);
-        loadFormatInfo(video);
     }
 
     private void applyPlexPreferredAudioLanguage() {

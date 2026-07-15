@@ -486,6 +486,7 @@ paths:
         with transcodeType=video for movies.
         Code: PlexPmsApi.getPlaybackDecision.
         PoC: path=/library/metadata/{ratingKey}, directPlay=1, protocol=hls.
+        Phase 4.5 force-transcode fallback: directPlay=0, directStream=0, protocol=hls.
       operationId: getPlaybackDecision
       parameters:
         - $ref: "#/components/parameters/XPlexTokenHeader"

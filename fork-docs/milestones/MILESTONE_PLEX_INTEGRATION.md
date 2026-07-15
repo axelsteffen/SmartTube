@@ -13,7 +13,7 @@ Play Plex media (primarily own library on Plex Media Server) inside SmartTube wi
 | `common/` / `smarttubetv/` | Hardcoded `YouTubeServiceManager.instance()` (~30 places) |
 | Playback | ExoPlayer, source-agnostic (HLS/DASH/MP4) |
 | MediaServiceCore fork | Category field in interfaces + OpenAPI spec |
-| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) + audio track selection (4.3) + YT-only feature gates (4.4) |
+| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) + sidebar (3.1) + library rows (3.2) + show/season drill-down (3.3) + grid/row pagination + full library grid (3.4) + PIN sign-in UI + server picker + settings (3.5) + resume sync (4.1) + external subtitles (4.2) + audio track selection (4.3) + YT-only feature gates (4.4) + Direct Play → transcode fallback (4.5) |
 
 ## Architecture Principles
 
@@ -153,7 +153,7 @@ SmartTube/                          (Fork)
 | 4 | 4.2 Subtitles (external sidecars) | done |
 | 4 | 4.3 Audio track selection | done |
 | 4 | 4.4 Disable YouTube-only features for Plex | done |
-| 4 | 4.5 Transcode fallback | open |
+| 4 | 4.5 Transcode fallback | done |
 | 4 | 4.6 Error handling | open |
 | 5 | 5.1–5.4 Hardening | open |
 
