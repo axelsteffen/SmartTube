@@ -15,6 +15,7 @@ import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexServer;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
 import com.liskovsoft.sharedutils.mylogger.Log;
+import com.liskovsoft.sharedutils.rx.RxHelper;
 
 import java.io.IOException;
 
@@ -22,7 +23,7 @@ import io.reactivex.Observable;
 import retrofit2.Response;
 
 /**
- * Resolves playable stream URLs for a Plex media item (Phase 1.6).
+ * Resolves playable stream URLs and reports playback progress (Phase 1.6 / 4.1).
  * Prefers Direct Play from metadata {@code Part.key}; falls back to HLS decision.
  */
 public class PlexMediaServiceImpl implements PlexMediaService {
@@ -50,6 +51,18 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         return Observable.fromCallable(() -> fetchStreamInfo(item));
     }
 
+    @Override
+    public Observable<Void> updateProgressObserve(
+            PlexMediaItem item, long positionMs, long durationMs, String state) {
+        return RxHelper.fromRunnable(() -> {
+            try {
+                reportTimeline(item, positionMs, durationMs, state);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     private PlexStreamInfo fetchStreamInfo(PlexMediaItem item) throws IOException {
         if (item == null || item.getRatingKey() == null || item.getRatingKey().isEmpty()) {
             throw new IllegalArgumentException("item with ratingKey required");
@@ -64,6 +77,8 @@ public class PlexMediaServiceImpl implements PlexMediaService {
                 api.getMetadata(item.getRatingKey(), token).execute();
         MediaContainer metaContainer = requireContainer(metaResponse, "fetch metadata " + item.getRatingKey());
 
+        long viewOffsetMs = firstViewOffset(metaContainer);
+
         PlexPart directPart = firstPartWithKey(metaContainer);
         if (directPart != null) {
             String url = PlexUrlHelper.absoluteUrl(baseUrl, directPart.getKey(), token);
@@ -72,15 +87,55 @@ public class PlexMediaServiceImpl implements PlexMediaService {
                 container = firstMediaContainer(metaContainer);
             }
             Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey());
-            return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(container), false);
+            return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs);
         }
 
         Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey());
-        return resolveViaDecision(api, item.getRatingKey(), baseUrl, token);
+        return resolveViaDecision(api, item.getRatingKey(), baseUrl, token, viewOffsetMs);
+    }
+
+    private void reportTimeline(PlexMediaItem item, long positionMs, long durationMs, String state)
+            throws IOException {
+        if (item == null || item.getRatingKey() == null || item.getRatingKey().isEmpty()) {
+            throw new IllegalArgumentException("item with ratingKey required");
+        }
+        String timelineState = state != null && !state.isEmpty() ? state : STATE_STOPPED;
+        long time = Math.max(0L, positionMs);
+        long duration = Math.max(0L, durationMs);
+        if (duration <= 0L && item.getDurationMs() > 0L) {
+            duration = item.getDurationMs();
+        }
+
+        String key = item.getKey();
+        if (key == null || key.isEmpty()) {
+            key = "/library/metadata/" + item.getRatingKey();
+        }
+
+        PlexServer server = requireSelectedServer();
+        PlexPmsApi api = pmsApi(server);
+        String token = pmsToken(server);
+        String clientId = prefs().getClientIdentifier();
+
+        Response<Void> response = api.reportTimeline(
+                item.getRatingKey(),
+                key,
+                timelineState,
+                time,
+                duration,
+                token,
+                clientId).execute();
+
+        if (!response.isSuccessful()) {
+            throw new IOException("Failed to report timeline for " + item.getRatingKey()
+                    + ": HTTP " + response.code());
+        }
+        Log.d(TAG, "Timeline " + timelineState + " ratingKey=" + item.getRatingKey()
+                + " time=" + time + " duration=" + duration);
     }
 
     private PlexStreamInfo resolveViaDecision(PlexPmsApi api, String ratingKey,
-                                              String baseUrl, String token) throws IOException {
+                                              String baseUrl, String token,
+                                              long viewOffsetMs) throws IOException {
         String path = "/library/metadata/" + ratingKey;
         Response<MediaContainerResponse> decisionResponse = api.getPlaybackDecision(
                 path, 1, 1, "hls", 0, 0, token).execute();
@@ -104,7 +159,16 @@ public class PlexMediaServiceImpl implements PlexMediaService {
 
         Log.d(TAG, "Decision stream for ratingKey=" + ratingKey
                 + " transcoded=" + transcoded + " decision=" + part.getDecision());
-        return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded);
+        return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded, viewOffsetMs);
+    }
+
+    private static long firstViewOffset(MediaContainer container) {
+        for (PlexMetadata metadata : container.getMetadata()) {
+            if (metadata.getViewOffset() > 0L) {
+                return metadata.getViewOffset();
+            }
+        }
+        return 0L;
     }
 
     private static PlexPart firstPartWithKey(MediaContainer container) {

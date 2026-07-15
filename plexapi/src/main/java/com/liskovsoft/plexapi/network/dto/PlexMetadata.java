@@ -30,6 +30,10 @@ public class PlexMetadata {
     @SerializedName("duration")
     private long mDuration;
 
+    /** Resume offset in milliseconds (PMS {@code viewOffset}). */
+    @SerializedName("viewOffset")
+    private long mViewOffset;
+
     @SerializedName("thumb")
     private String mThumb;
 
@@ -65,6 +69,10 @@ public class PlexMetadata {
 
     public long getDuration() {
         return mDuration;
+    }
+
+    public long getViewOffset() {
+        return mViewOffset;
     }
 
     public String getThumb() {

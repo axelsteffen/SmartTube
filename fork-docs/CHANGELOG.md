@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -42,6 +42,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../misc/AppDataSourceManager.java**: Plex settings tile when enabled (Phase 3.5).
 - **common/src/main/res/values/strings.xml**: Plex PIN/server strings (Phase 3.5).
 - **common/.../misc/PlexPlaybackHelper.java**: Public `resolvePlexMediaItem()`; playlistId fallback for container stubs (Phase 3.3).
+- **common/.../misc/PlexPlaybackHelper.java**: Applies PMS `viewOffset` on format resolve; `updateProgress()` → `/:/timeline` (Phase 4.1).
+- **common/.../playback/controllers/VideoStateController.java**: Plex branch in `updateHistory` + per-tickle progress while playing (Phase 4.1).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -93,6 +95,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../adapter/PlexMediaItemAdapter.java**: `fromLibraryBrowse` stub (`reloadPageKey` + `params` = library type) opens full grid (Phase 3.4).
 - **plexapi/src/test/.../PlexMediaGroupAdapterTest.java**: Pagination + library grid unit tests (Phase 3.4).
 - **plexapi/src/test/.../PlexLibraryServiceImplTest.java**: Offset page unit test (Phase 3.4).
+- **plexserviceinterfaces/.../data/PlexMediaItem.java**: `getViewOffsetMs()` (Phase 4.1).
+- **plexserviceinterfaces/.../PlexMediaService.java**: `updateProgressObserve` + timeline state constants (Phase 4.1).
+- **plexserviceinterfaces/.../data/PlexStreamInfo.java**: `getViewOffsetMs()` (Phase 4.1).
+- **plexapi/.../network/dto/PlexMetadata.java**: Parse `viewOffset` (Phase 4.1).
+- **plexapi/.../library/PlexMediaItemImpl.java**: Store/map `viewOffsetMs` (Phase 4.1).
+- **plexapi/.../adapter/PlexMediaItemAdapter.java**: Map viewOffset → `percentWatched` / `startTimeSeconds` (Phase 4.1).
+- **plexapi/.../network/PlexPmsApi.java**: `reportTimeline` (`GET /:/timeline`) (Phase 4.1).
+- **plexapi/.../service/PlexMediaServiceImpl.java**: Capture viewOffset on stream resolve; implement progress report (Phase 4.1).
+- **plexapi/.../media/PlexStreamInfoImpl.java**: Carry `viewOffsetMs` (Phase 4.1).
+- **plexapi/openapi-plex-pms-in-use.yaml**: `/:/timeline` (Phase 4.1).
+- **plexapi/src/test/...**: Timeline + viewOffset unit tests (Phase 4.1).
 
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_

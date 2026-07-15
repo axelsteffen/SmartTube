@@ -90,12 +90,22 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public int getPercentWatched() {
-        return -1;
+        long durationMs = mItem.getDurationMs();
+        long viewOffsetMs = mItem.getViewOffsetMs();
+        if (durationMs <= 0L || viewOffsetMs <= 0L) {
+            return -1;
+        }
+        int percent = (int) Math.min(100, (viewOffsetMs * 100L) / durationMs);
+        return percent > 0 ? percent : -1;
     }
 
     @Override
     public int getStartTimeSeconds() {
-        return -1;
+        long viewOffsetMs = mItem.getViewOffsetMs();
+        if (viewOffsetMs <= 0L) {
+            return -1;
+        }
+        return (int) (viewOffsetMs / 1000L);
     }
 
     @Override

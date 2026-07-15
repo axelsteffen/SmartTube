@@ -166,6 +166,50 @@ public class PlexMediaServiceImplTest {
         assertEquals("video/x-matroska", PlexStreamInfoImpl.mimeHint("mkv"));
     }
 
+    @Test
+    public void getStreamInfoObserve_capturesViewOffset() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"1049\","
+                + "\"key\":\"/library/metadata/1049\","
+                + "\"viewOffset\":123456,"
+                + "\"duration\":5129000,"
+                + "\"Media\":[{"
+                + "\"container\":\"mkv\","
+                + "\"Part\":[{"
+                + "\"id\":827,"
+                + "\"key\":\"/library/parts/827/file.mkv\","
+                + "\"container\":\"mkv\""
+                + "}]"
+                + "}]"
+                + "}]"
+                + "}}"));
+
+        PlexStreamInfo stream = mService.getStreamInfoObserve(movie("1049")).blockingFirst();
+        assertEquals(123456L, stream.getViewOffsetMs());
+    }
+
+    @Test
+    public void updateProgressObserve_reportsTimeline() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200));
+
+        mService.updateProgressObserve(movie("1049"), 90_000L, 5_129_000L, "paused")
+                .blockingSubscribe();
+
+        RecordedRequest request = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(request);
+        String path = request.getPath();
+        assertNotNull(path);
+        assertTrue(path.contains(":/timeline"));
+        assertTrue(path.contains("ratingKey=1049"));
+        assertTrue(path.contains("state=paused"));
+        assertTrue(path.contains("time=90000"));
+        assertTrue(path.contains("duration=5129000"));
+        assertEquals("server-token", request.getHeader("X-Plex-Token"));
+        assertNotNull(request.getHeader("X-Plex-Client-Identifier"));
+    }
+
     private static PlexMediaItem movie(String ratingKey) {
         return new PlexMediaItemImpl(
                 ratingKey, "/library/metadata/" + ratingKey, "Zoolander", "movie",

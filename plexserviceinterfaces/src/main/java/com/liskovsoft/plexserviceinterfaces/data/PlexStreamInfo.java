@@ -10,4 +10,7 @@ public interface PlexStreamInfo {
     String getContainer();
 
     boolean isTranscoded();
+
+    /** PMS {@code viewOffset} captured with metadata (ms); 0 if unknown. */
+    long getViewOffsetMs();
 }

@@ -11,6 +11,9 @@ public interface PlexMediaItem {
 
     long getDurationMs();
 
+    /** Playback resume offset from PMS ({@code viewOffset}), in milliseconds. */
+    long getViewOffsetMs();
+
     String getThumbUrl();
 
     int getYear();

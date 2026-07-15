@@ -13,11 +13,17 @@ public final class PlexMediaItemImpl implements PlexMediaItem {
     private final String mTitle;
     private final String mType;
     private final long mDurationMs;
+    private final long mViewOffsetMs;
     private final String mThumbUrl;
     private final int mYear;
 
     public PlexMediaItemImpl(String ratingKey, String key, String title, String type,
                              long durationMs, String thumbUrl, int year) {
+        this(ratingKey, key, title, type, durationMs, thumbUrl, year, 0L);
+    }
+
+    public PlexMediaItemImpl(String ratingKey, String key, String title, String type,
+                             long durationMs, String thumbUrl, int year, long viewOffsetMs) {
         mRatingKey = ratingKey;
         mKey = key;
         mTitle = title;
@@ -25,6 +31,7 @@ public final class PlexMediaItemImpl implements PlexMediaItem {
         mDurationMs = durationMs;
         mThumbUrl = thumbUrl;
         mYear = year;
+        mViewOffsetMs = Math.max(0L, viewOffsetMs);
     }
 
     public static PlexMediaItemImpl fromMetadata(PlexMetadata metadata, String baseUrl, String token) {
@@ -39,7 +46,8 @@ public final class PlexMediaItemImpl implements PlexMediaItem {
                 metadata.getType(),
                 metadata.getDuration(),
                 thumbUrl,
-                metadata.getYear());
+                metadata.getYear(),
+                metadata.getViewOffset());
     }
 
     @Override
@@ -65,6 +73,11 @@ public final class PlexMediaItemImpl implements PlexMediaItem {
     @Override
     public long getDurationMs() {
         return mDurationMs;
+    }
+
+    @Override
+    public long getViewOffsetMs() {
+        return mViewOffsetMs;
     }
 
     @Override

@@ -11,7 +11,9 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerU
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService.State;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.plexserviceinterfaces.PlexMediaService;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 import com.liskovsoft.smartyoutubetv2.common.misc.ScreensaverManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
@@ -139,7 +141,18 @@ public class VideoStateController extends BasePlayerController {
             return;
         }
 
-        if (++mTickleLeft > HISTORY_UPDATE_INTERVAL_MINUTES && getPlayer().isPlaying()) {
+        if (!getPlayer().isPlaying()) {
+            return;
+        }
+
+        Video video = getVideo();
+        // Plex timeline expects regular updates (~1/min tickle is enough for TV).
+        if (video != null && video.isPlex()) {
+            saveState();
+            return;
+        }
+
+        if (++mTickleLeft > HISTORY_UPDATE_INTERVAL_MINUTES) {
             mTickleLeft = 0;
             saveState();
         }
@@ -556,7 +569,35 @@ public class VideoStateController extends BasePlayerController {
             return;
         }
 
+        if (video.isPlex()) {
+            updatePlexProgress(video);
+            return;
+        }
+
         MediaServiceManager.instance().updateHistory(video, Math.max(getPlayer().getPositionMs(), 3_000)); // 0 == fully watched
+    }
+
+    private void updatePlexProgress(Video video) {
+        long positionMs = Math.max(getPlayer().getPositionMs(), 0L);
+        long durationMs = getPlayer().getDurationMs();
+        if (durationMs <= 0L) {
+            durationMs = video.getDurationMs();
+        }
+
+        String state;
+        if (durationMs > 0L && durationMs - positionMs <= 1_000L) {
+            // Near end → stopped so PMS can scrobble.
+            positionMs = durationMs;
+            state = PlexMediaService.STATE_STOPPED;
+        } else if (getPlayer().isPlaying()) {
+            state = PlexMediaService.STATE_PLAYING;
+        } else {
+            state = getPlayEnabled()
+                    ? PlexMediaService.STATE_PAUSED
+                    : PlexMediaService.STATE_STOPPED;
+        }
+
+        PlexPlaybackHelper.updateProgress(video, positionMs, durationMs, state);
     }
 
     /**

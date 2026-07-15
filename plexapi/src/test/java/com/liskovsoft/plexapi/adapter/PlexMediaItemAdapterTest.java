@@ -120,4 +120,23 @@ public class PlexMediaItemAdapterTest {
         assertNotNull(item);
         assertTrue(item instanceof PlexBackedMediaItem);
     }
+
+    @Test
+    public void from_mapsViewOffsetToProgress() {
+        PlexMediaItem plex = new PlexMediaItemImpl(
+                "12345",
+                "/library/metadata/12345",
+                "Test Movie",
+                "movie",
+                5_400_000L,
+                null,
+                2020,
+                540_000L); // 10%
+
+        MediaItem item = PlexMediaItemAdapter.from(plex);
+
+        assertNotNull(item);
+        assertEquals(10, item.getPercentWatched());
+        assertEquals(540, item.getStartTimeSeconds());
+    }
 }

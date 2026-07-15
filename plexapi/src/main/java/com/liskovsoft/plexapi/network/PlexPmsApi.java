@@ -63,4 +63,18 @@ public interface PlexPmsApi {
             @Query("mediaIndex") Integer mediaIndex,
             @Query("partIndex") Integer partIndex,
             @Header(PlexHeaders.TOKEN) String token);
+
+    /**
+     * Report playback timeline / resume offset (Phase 4.1).
+     * Called on play-state changes and periodically while playing.
+     */
+    @GET(":/timeline")
+    Call<Void> reportTimeline(
+            @Query("ratingKey") String ratingKey,
+            @Query("key") String key,
+            @Query("state") String state,
+            @Query("time") long time,
+            @Query("duration") long duration,
+            @Header(PlexHeaders.TOKEN) String token,
+            @Header(PlexHeaders.CLIENT_IDENTIFIER) String clientIdentifier);
 }

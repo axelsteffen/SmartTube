@@ -9,11 +9,17 @@ public final class PlexStreamInfoImpl implements PlexStreamInfo {
     private final String mUrl;
     private final String mContainer;
     private final boolean mTranscoded;
+    private final long mViewOffsetMs;
 
     public PlexStreamInfoImpl(String url, String container, boolean transcoded) {
+        this(url, container, transcoded, 0L);
+    }
+
+    public PlexStreamInfoImpl(String url, String container, boolean transcoded, long viewOffsetMs) {
         mUrl = url;
         mContainer = container;
         mTranscoded = transcoded;
+        mViewOffsetMs = Math.max(0L, viewOffsetMs);
     }
 
     @Override
@@ -29,6 +35,11 @@ public final class PlexStreamInfoImpl implements PlexStreamInfo {
     @Override
     public boolean isTranscoded() {
         return mTranscoded;
+    }
+
+    @Override
+    public long getViewOffsetMs() {
+        return mViewOffsetMs;
     }
 
     /** Maps PMS container / protocol strings to MIME-like hints for ExoPlayer. */

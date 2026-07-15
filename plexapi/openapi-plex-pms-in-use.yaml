@@ -45,6 +45,8 @@ tags:
     description: Metadata detail (Media / Part keys)
   - name: pms-transcode
     description: Playback decision / stream resolution
+  - name: pms-timeline
+    description: Playback progress / resume (Phase 4.1)
 
 components:
   parameters:
@@ -492,3 +494,40 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  /:/timeline:
+    get:
+      tags: [pms-timeline]
+      summary: Report media timeline / resume offset
+      description: |
+        Called on play-state changes and periodically while playing.
+        Code: PlexPmsApi.reportTimeline (Phase 4.1).
+      operationId: reportTimeline
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/XPlexClientIdentifier"
+        - name: ratingKey
+          in: query
+          required: true
+          schema: { type: string }
+        - name: key
+          in: query
+          required: true
+          schema: { type: string }
+          description: e.g. /library/metadata/{ratingKey}
+        - name: state
+          in: query
+          required: true
+          schema: { type: string, enum: [playing, paused, stopped, buffering] }
+        - name: time
+          in: query
+          required: true
+          schema: { type: integer }
+          description: Current position in milliseconds
+        - name: duration
+          in: query
+          schema: { type: integer }
+          description: Item duration in milliseconds
+      responses:
+        "200":
+          description: Timeline accepted
