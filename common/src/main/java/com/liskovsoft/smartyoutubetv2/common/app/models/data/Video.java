@@ -21,10 +21,12 @@ import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService;
+import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
 import com.liskovsoft.smartyoutubetv2.common.prefs.BlockedChannelData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.googlecommon.common.helpers.ServiceHelper;
 import com.liskovsoft.googlecommon.common.helpers.YouTubeHelper;
+import com.liskovsoft.plexserviceinterfaces.data.PlexBackedMediaItem;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -98,6 +100,8 @@ public final class Video {
     public boolean isLiveEnd;
     public boolean isShuffled;
     public String searchQuery;
+    /** Fork-only: media backend for this item (default YouTube). */
+    public MediaSourceRegistry.Source mediaSource = MediaSourceRegistry.Source.YOUTUBE;
     private int startSegmentNum;
     private long liveDurationMs = -1;
     private long durationMs = -1;
@@ -161,6 +165,9 @@ public final class Video {
         video.durationMs = item.getDurationMs();
         video.searchQuery = item.getSearchQuery();
         video.mediaItem = item;
+        video.mediaSource = item instanceof PlexBackedMediaItem
+                ? MediaSourceRegistry.Source.PLEX
+                : MediaSourceRegistry.Source.YOUTUBE;
 
         return video;
     }
@@ -191,6 +198,9 @@ public final class Video {
         video.clickTrackingParams = item.clickTrackingParams;
         video.mediaItem = item.mediaItem;
         video.group = item.group;
+        video.mediaSource = item.mediaSource != null
+                ? item.mediaSource
+                : MediaSourceRegistry.Source.YOUTUBE;
 
         return video;
     }
@@ -442,7 +452,12 @@ public final class Video {
             split = Helpers.appendArray(split, new String[]{null});
         }
 
-        if (split.length != 23) {
+        // 'mediaSource' backward compatibility (fork)
+        if (split.length == 23) {
+            split = Helpers.appendArray(split, new String[]{MediaSourceRegistry.Source.YOUTUBE.name()});
+        }
+
+        if (split.length != 24) {
             return null;
         }
 
@@ -471,6 +486,7 @@ public final class Video {
         result.isLive = Helpers.parseBoolean(split[20]);
         result.channelGroupId = Helpers.parseStr(split[21]);
         result.searchQuery = Helpers.parseStr(split[22]);
+        result.mediaSource = parseMediaSource(Helpers.parseStr(split[23]));
 
         // Reset old type (int)
         if (Helpers.equals(result.channelGroupId, "-1")) {
@@ -483,13 +499,37 @@ public final class Video {
     @NonNull
     @Override
     public String toString() {
+        MediaSourceRegistry.Source source = mediaSource != null
+                ? mediaSource
+                : MediaSourceRegistry.Source.YOUTUBE;
         return Helpers.mergeObj(id, category, title, videoId, null, playlistId, channelId, bgImageUrl, cardImageUrl,
                 null, playlistParams, sectionId, getReloadPageKey(), itemType, secondTitle, previewUrl, percentWatched,
-                metadataTitle, metadataSecondTitle, badge, isLive, channelGroupId, searchQuery);
+                metadataTitle, metadataSecondTitle, badge, isLive, channelGroupId, searchQuery, source.name());
     }
 
     public boolean hasVideo() {
         return videoId != null;
+    }
+
+    /** Fork-only: true when this video is backed by Plex. */
+    public boolean isPlex() {
+        return mediaSource == MediaSourceRegistry.Source.PLEX;
+    }
+
+    /** Fork-only: true when this video uses the YouTube backend (default). */
+    public boolean isYouTube() {
+        return mediaSource == null || mediaSource == MediaSourceRegistry.Source.YOUTUBE;
+    }
+
+    private static MediaSourceRegistry.Source parseMediaSource(String value) {
+        if (value == null || value.isEmpty()) {
+            return MediaSourceRegistry.Source.YOUTUBE;
+        }
+        try {
+            return MediaSourceRegistry.Source.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return MediaSourceRegistry.Source.YOUTUBE;
+        }
     }
 
     public boolean hasChannel() {

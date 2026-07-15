@@ -5,6 +5,7 @@ import android.media.Rating;
 import androidx.annotation.Nullable;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
+import com.liskovsoft.plexserviceinterfaces.data.PlexBackedMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
 /**
@@ -12,8 +13,9 @@ import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
  * so existing UI ({@code Video.from(MediaItem)}) can consume Plex items.
  * <p>
  * {@link #getVideoId()} maps to Plex {@code ratingKey} for later stream/playback routing.
+ * Implements {@link PlexBackedMediaItem} so {@code Video.from} tags {@code mediaSource = PLEX}.
  */
-public final class PlexMediaItemAdapter implements MediaItem {
+public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaItem {
     private static final String TYPE_MOVIE = "movie";
 
     private final PlexMediaItem mItem;

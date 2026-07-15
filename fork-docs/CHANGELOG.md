@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.3 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.4 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`, `Video.mediaSource`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -24,6 +24,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../errors/PlexDisabledError.java** (new): Placeholder content for disabled Plex sidebar section.
 - **common/.../presenters/BrowsePresenter.java**: Hooks into `SidebarSectionRegistry` for extra sections.
 - **common/src/main/res/values/strings.xml**: `header_plex`, `plex_not_available` strings.
+- **common/.../models/data/Video.java**: Fork-only `mediaSource` field (`MediaSourceRegistry.Source`); set from `PlexBackedMediaItem` in `from(MediaItem)`; copy + serialize/deserialize + `isPlex()`/`isYouTube()` (Phase 2.4).
+- **common/build.gradle**: Depends on `plexserviceinterfaces` for the marker interface.
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -31,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### plexserviceinterfaces
 - **plexserviceinterfaces/** (new): Fork-only Plex API contracts — `PlexServiceManager`, sign-in/server/library/media services, and data interfaces (`PlexServer`, `PlexLibrary`, `PlexMediaItem`, `PlexStreamInfo`, `PlexAuthPin`).
 - **plexserviceinterfaces/.../data/PlexServer.java**: Added `getAccessToken()` for per-server PMS auth.
+- **plexserviceinterfaces/.../data/PlexBackedMediaItem.java** (new): Marker interface so `Video.from` can tag Plex without depending on plexapi (Phase 2.4).
 
 ### plexapi
 - **plexapi/** (new): Fork-only Plex API implementation module (Retrofit deps). Entry point `com.liskovsoft.plexapi.PlexServiceManager`.
@@ -41,7 +44,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../server/PlexServerImpl.java**: Maps `PlexResource` → `PlexServer` (incl. per-server `accessToken`).
 - **plexapi/.../service/PlexLibraryServiceImpl.java**: Lists sections + first page of movies via PMS (`type=1`, page size 50) using selected server + accessToken (Phase 1.5).
 - **plexapi/.../service/PlexMediaServiceImpl.java**: Resolves stream URL — Direct Play from metadata `Part.key`, HLS decision fallback (Phase 1.6).
-- **plexapi/.../adapter/PlexMediaItemAdapter.java** (new): Wraps `PlexMediaItem` as MSC `MediaItem` (`videoId` = `ratingKey`); enables `Video.from(MediaItem)` (Phase 2.1).
+- **plexapi/.../adapter/PlexMediaItemAdapter.java** (new): Wraps `PlexMediaItem` as MSC `MediaItem` (`videoId` = `ratingKey`); enables `Video.from(MediaItem)` (Phase 2.1). Implements `PlexBackedMediaItem` for `Video.mediaSource` tagging (Phase 2.4).
 - **plexapi/.../adapter/PlexMediaGroupAdapter.java** (new): Wraps `PlexLibrary` + movie page as MSC `MediaGroup` (`TYPE_MOVIES`, `params` = library key); enables `VideoGroup.from(MediaGroup)` (Phase 2.2).
 - **plexapi/.../adapter/PlexMediaItemFormatInfo.java** (new): Maps `PlexStreamInfo` + item metadata to MSC `MediaItemFormatInfo` — Direct Play → UrlFormats; transcoded HLS → `getHlsManifestUrl()` (Phase 2.3; VOD HLS routing in 2.5).
 - **plexapi/.../adapter/PlexMediaFormat.java** (new): Minimal `MediaFormat` (`FORMAT_TYPE_REGULAR`) for progressive Direct Play URLs.

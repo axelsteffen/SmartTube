@@ -2,6 +2,7 @@ package com.liskovsoft.plexapi.adapter;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
 import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
+import com.liskovsoft.plexserviceinterfaces.data.PlexBackedMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
 import org.junit.Test;
@@ -67,5 +68,13 @@ public class PlexMediaItemAdapterTest {
         assertNotNull(a);
         assertEquals(a, b);
         assertFalse(a.equals(c));
+    }
+
+    @Test
+    public void from_implementsPlexBackedMediaItem() {
+        MediaItem item = PlexMediaItemAdapter.from(new PlexMediaItemImpl(
+                "1", "/k", "T", "movie", 0, null, 0));
+        assertNotNull(item);
+        assertTrue(item instanceof PlexBackedMediaItem);
     }
 }

@@ -61,6 +61,7 @@ dependencies {
     implementation project(':sharedutils')
     implementation project(':fragment-1.1.0')
     implementation project(':mediaserviceinterfaces')
+    implementation project(':plexserviceinterfaces')
     implementation project(':youtubeapi')
     implementation project(':filepicker-lib')
 
