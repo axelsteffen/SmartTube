@@ -25,7 +25,9 @@ import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaSourceRegistry;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 
+import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
 public class VideoLoaderController extends BasePlayerController {
@@ -285,9 +287,21 @@ public class VideoLoaderController extends BasePlayerController {
         Utils.post(mShowProgressBar);
         disposeActions();
 
-        ServiceManager service = MediaSourceRegistry.getServiceManager();
-        MediaItemService mediaItemManager = service.getMediaItemService();
-        mFormatInfoAction = mediaItemManager.getFormatInfoObserve(video.videoId)
+        Observable<MediaItemFormatInfo> formatInfoObserve;
+
+        if (video.isPlex()) {
+            formatInfoObserve = PlexPlaybackHelper.getFormatInfoObserve(video);
+            if (formatInfoObserve == null) {
+                formatInfoObserve = Observable.error(
+                        new IllegalStateException("Plex video missing ratingKey/mediaItem"));
+            }
+        } else {
+            ServiceManager service = MediaSourceRegistry.getServiceManager();
+            MediaItemService mediaItemManager = service.getMediaItemService();
+            formatInfoObserve = mediaItemManager.getFormatInfoObserve(video.videoId);
+        }
+
+        mFormatInfoAction = formatInfoObserve
                 .subscribe(this::processFormatInfo,
                            error -> {
                                getPlayer().showProgressBar(false);
@@ -349,6 +363,10 @@ public class VideoLoaderController extends BasePlayerController {
             player.openDashUrl(formatInfo.getDashManifestUrl());
         } else if (formatInfo.isLive() && formatInfo.containsHlsUrl()) {
             Log.d(TAG, "Loading live video (current or past live stream) in hls format...");
+            player.openHlsUrl(formatInfo.getHlsManifestUrl());
+        } else if (formatInfo.containsHlsUrl()) {
+            // VOD HLS (e.g. Plex transcode) — live gate above does not apply
+            Log.d(TAG, "Loading VOD video in hls format...");
             player.openHlsUrl(formatInfo.getHlsManifestUrl());
         } else if (formatInfo.containsUrlFormats()) {
             Log.d(TAG, "Loading url list video. This is always LQ...");

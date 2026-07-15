@@ -237,6 +237,11 @@ public class SuggestionsController extends BasePlayerController {
             return;
         }
 
+        // Plex items are not YouTube metadata/suggestions — skip MSC YouTube calls (Phase 2.5)
+        if (video != null && video.isPlex()) {
+            return;
+        }
+
         clearSuggestionsIfNeeded(video);
         loadMetadata(video, metadata -> updateSuggestions(metadata, video));
     }

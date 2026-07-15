@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.4 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`, `Video.mediaSource`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done (`PlexMediaItemAdapter`, `PlexMediaGroupAdapter`, `PlexMediaItemFormatInfo`, `Video.mediaSource`, playback routing). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -25,7 +25,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../presenters/BrowsePresenter.java**: Hooks into `SidebarSectionRegistry` for extra sections.
 - **common/src/main/res/values/strings.xml**: `header_plex`, `plex_not_available` strings.
 - **common/.../models/data/Video.java**: Fork-only `mediaSource` field (`MediaSourceRegistry.Source`); set from `PlexBackedMediaItem` in `from(MediaItem)`; copy + serialize/deserialize + `isPlex()`/`isYouTube()` (Phase 2.4).
-- **common/build.gradle**: Depends on `plexserviceinterfaces` for the marker interface.
+- **common/build.gradle**: Depends on `plexserviceinterfaces` (marker) and `plexapi` (playback routing, Phase 2.5).
+- **common/.../misc/PlexPlaybackHelper.java** (new): Resolves Plex `MediaItemFormatInfo` via `PlexServiceManager` + adapters for `Video.isPlex()`; uses `RxHelper` for IO/main scheduling (Phase 2.5).
+- **common/.../playback/controllers/VideoLoaderController.java**: Per-video Plex branch in `loadFormatInfo`; VOD HLS via `openHlsUrl` when `containsHlsUrl()` (Phase 2.5).
+- **common/.../playback/controllers/SuggestionsController.java**: Skip YouTube metadata/suggestions for Plex videos (Phase 2.5).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -46,7 +49,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../service/PlexMediaServiceImpl.java**: Resolves stream URL — Direct Play from metadata `Part.key`, HLS decision fallback (Phase 1.6).
 - **plexapi/.../adapter/PlexMediaItemAdapter.java** (new): Wraps `PlexMediaItem` as MSC `MediaItem` (`videoId` = `ratingKey`); enables `Video.from(MediaItem)` (Phase 2.1). Implements `PlexBackedMediaItem` for `Video.mediaSource` tagging (Phase 2.4).
 - **plexapi/.../adapter/PlexMediaGroupAdapter.java** (new): Wraps `PlexLibrary` + movie page as MSC `MediaGroup` (`TYPE_MOVIES`, `params` = library key); enables `VideoGroup.from(MediaGroup)` (Phase 2.2).
-- **plexapi/.../adapter/PlexMediaItemFormatInfo.java** (new): Maps `PlexStreamInfo` + item metadata to MSC `MediaItemFormatInfo` — Direct Play → UrlFormats; transcoded HLS → `getHlsManifestUrl()` (Phase 2.3; VOD HLS routing in 2.5).
+- **plexapi/.../adapter/PlexMediaItemFormatInfo.java** (new): Maps `PlexStreamInfo` + item metadata to MSC `MediaItemFormatInfo` — Direct Play → UrlFormats; transcoded HLS → `getHlsManifestUrl()` (Phase 2.3; VOD HLS opened in VideoLoaderController 2.5).
 - **plexapi/.../adapter/PlexMediaFormat.java** (new): Minimal `MediaFormat` (`FORMAT_TYPE_REGULAR`) for progressive Direct Play URLs.
 - **plexapi/build.gradle**: Depends on `mediaserviceinterfaces` for the adapters.
 - **plexapi/src/test/.../PlexMediaItemAdapterTest.java**: Mapping + equality unit tests (Phase 2.1).

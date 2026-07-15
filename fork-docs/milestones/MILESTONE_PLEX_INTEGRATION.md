@@ -13,7 +13,7 @@ Play Plex media (primarily own library on Plex Media Server) inside SmartTube wi
 | `common/` / `smarttubetv/` | Hardcoded `YouTubeServiceManager.instance()` (~30 places) |
 | Playback | ExoPlayer, source-agnostic (HLS/DASH/MP4) |
 | MediaServiceCore fork | Category field in interfaces + OpenAPI spec |
-| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource (2.1–2.4) |
+| Plex | Modules + PIN auth + discovery + library/movies + stream URL + MediaItem/MediaGroup/FormatInfo adapters + Video.mediaSource + playback routing (2.1–2.5) |
 
 ## Architecture Principles
 
@@ -143,7 +143,7 @@ SmartTube/                          (Fork)
 | 2 | 2.2 PlexMediaGroup → MediaGroup adapter | done |
 | 2 | 2.3 PlexFormatInfo → MediaItemFormatInfo | done |
 | 2 | 2.4 Video.mediaSource field (fork-only) | done |
-| 2 | 2.5 Playback routing by source | open |
+| 2 | 2.5 Playback routing by source | done |
 | 3 | 3.1–3.5 Browse UI | open |
 | 4 | 4.1–4.6 Playback polish | open |
 | 5 | 5.1–5.4 Hardening | open |
