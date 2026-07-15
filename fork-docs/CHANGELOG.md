@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.4 done (sidebar, library rows, drill-down, grid/row pagination). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -25,7 +25,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../errors/PlexSignInError.java** (new): Sign-in prompt for Plex sidebar when not authenticated / no server (Phase 3.1; settings UI in 3.5).
 - **common/.../misc/MediaSourceRegistry.java**: `isPlexEnabled()` returns `true` (Phase 3.1).
 - **common/.../presenters/BrowsePresenter.java**: Hooks into `SidebarSectionRegistry` for extra sections.
-- **common/src/main/res/values/strings.xml**: `header_plex`, `plex_not_available`, `plex_signin_to_browse`, `plex_signin_coming_soon` strings.
+- **common/src/main/res/values/strings.xml**: `header_plex`, `plex_not_available`, `plex_signin_to_browse`, `plex_select_server`, `plex_no_servers`, `plex_no_server_selected`, `plex_current_server` strings.
 - **common/.../models/data/Video.java**: Fork-only `mediaSource` field (`MediaSourceRegistry.Source`); set from `PlexBackedMediaItem` in `from(MediaItem)`; copy + serialize/deserialize + `isPlex()`/`isYouTube()` (Phase 2.4).
 - **common/build.gradle**: Depends on `plexserviceinterfaces` (marker) and `plexapi` (playback routing, Phase 2.5).
 - **common/.../misc/PlexPlaybackHelper.java** (new): Resolves Plex `MediaItemFormatInfo` via `PlexServiceManager` + adapters for `Video.isPlex()`; uses `RxHelper` for IO/main scheduling (Phase 2.5).
@@ -33,7 +33,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../playback/controllers/SuggestionsController.java**: Skip YouTube metadata/suggestions for Plex videos (Phase 2.5).
 - **common/.../presenters/PlexBrowsePresenter.java** (new): Loads Plex movie/show libraries as `MediaGroup` rows; resolves show/season children for drill-down (Phase 3.2–3.3); pagination + full library grid via `continueGroupObserve` / `getLibraryGridObserve` (Phase 3.4).
 - **common/.../presenters/ChannelUploadsPresenter.java**: Plex branch in `obtainUploadsObservable` for show/season drill-down via `PlexBrowsePresenter` (Phase 3.3); library grid + Plex `continueGroupObserve` (Phase 3.4).
-- **common/.../presenters/BrowsePresenter.java**: Registers `TYPE_PLEX` row mapping from `PlexBrowsePresenter` when Plex is enabled (Phase 3.2); Plex pagination hook in `continueGroup` (Phase 3.4).
+- **common/.../presenters/BrowsePresenter.java**: Registers `TYPE_PLEX` row mapping from `PlexBrowsePresenter` when Plex is enabled (Phase 3.2); Plex pagination hook in `continueGroup` (Phase 3.4); refreshes sidebar mappings on `updateSections` after sign-in (Phase 3.5).
+- **common/.../presenters/PlexSignInPresenter.java** (new): PIN auth via existing `SignInView` / `signInWithPinObserve` (Phase 3.5).
+- **common/.../presenters/dialogs/PlexServerSelectionPresenter.java** (new): PMS picker dialog after PIN; updates browse sections (Phase 3.5).
+- **common/.../presenters/settings/PlexSettingsPresenter.java** (new): Settings entry for sign-in, server change, sign-out (Phase 3.5).
+- **common/.../presenters/SignInPresenter.java**: Dispatches to `PlexSignInPresenter` when waiting (Phase 3.5).
+- **common/.../errors/PlexSignInError.java**: Action starts PIN or server picker (Phase 3.5).
+- **common/.../misc/AppDataSourceManager.java**: Plex settings tile when enabled (Phase 3.5).
+- **common/src/main/res/values/strings.xml**: Plex PIN/server strings (Phase 3.5).
 - **common/.../misc/PlexPlaybackHelper.java**: Public `resolvePlexMediaItem()`; playlistId fallback for container stubs (Phase 3.3).
 
 ### smarttubetv

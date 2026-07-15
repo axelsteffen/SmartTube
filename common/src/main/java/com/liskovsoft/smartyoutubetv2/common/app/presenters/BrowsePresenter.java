@@ -301,6 +301,9 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
             return;
         }
 
+        // Fork: refresh Plex sidebar section type after sign-in / server pick (Phase 3.5)
+        SidebarSectionRegistry.registerSectionMappings(mSectionsMapping, getContext());
+
         initPinnedData();
 
         refreshSections();

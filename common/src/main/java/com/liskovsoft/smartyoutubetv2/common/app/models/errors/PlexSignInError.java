@@ -2,12 +2,14 @@ package com.liskovsoft.smartyoutubetv2.common.app.models.errors;
 
 import android.content.Context;
 
-import com.liskovsoft.sharedutils.helpers.MessageHelpers;
+import com.liskovsoft.plexapi.PlexServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlexSignInPresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.PlexServerSelectionPresenter;
 
 /**
  * Shown when the Plex sidebar section is enabled but the user is not signed in
- * or has no server selected. Full PIN / settings UI lands in Phase 3.5.
+ * or has no server selected. Action starts the PIN / server flow (Phase 3.5).
  */
 public class PlexSignInError implements ErrorFragmentData {
     private final Context mContext;
@@ -18,7 +20,11 @@ public class PlexSignInError implements ErrorFragmentData {
 
     @Override
     public void onAction() {
-        MessageHelpers.showMessage(mContext, R.string.plex_signin_coming_soon);
+        if (PlexServiceManager.instance().getSignInService().isSigned()) {
+            PlexServerSelectionPresenter.instance(mContext).show(true);
+        } else {
+            PlexSignInPresenter.instance(mContext).start();
+        }
     }
 
     @Override

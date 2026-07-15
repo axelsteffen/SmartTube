@@ -44,7 +44,10 @@ public class SignInPresenter extends BasePresenter<SignInView> {
             return;
         }
 
-        if (YTSignInPresenter.instance(getContext()).isWaiting()) {
+        // Fork: Plex PIN flow reuses SignInView (Phase 3.5)
+        if (PlexSignInPresenter.instance(getContext()).isWaiting()) {
+            mPresenter = PlexSignInPresenter.instance(getContext());
+        } else if (YTSignInPresenter.instance(getContext()).isWaiting()) {
             mPresenter = YTSignInPresenter.instance(getContext());
         } else if (GoogleSignInPresenter.instance(getContext()).isWaiting()) {
             mPresenter = GoogleSignInPresenter.instance(getContext());
