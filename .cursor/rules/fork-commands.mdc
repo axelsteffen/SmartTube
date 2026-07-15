@@ -1,0 +1,41 @@
+---
+description: Route short fork commands to the correct skill or workflow; always match user intent against the command registry first
+alwaysApply: true
+---
+
+# Fork Command Router
+
+When the user sends a **short command** (one line, few words, often without context), match it against the registry below **before** improvising. Then **read the linked skill or doc in full** and execute that workflow.
+
+Matching: case-insensitive; aliases are OR — any alias is enough; allow minor typos and German/English mix.
+
+## Command Registry
+
+| Command ID | User says (aliases) | Do this immediately |
+|------------|---------------------|---------------------|
+| `sync-yuliskov` | `sync yuliskov`, `sync with yuliskov`, `merge upstream`, `upstream merge`, `update from upstream`, `pull upstream`, `yuliskov merge`, `upstream sync` | Read [`.cursor/skills/upstream-merge/SKILL.md`](../skills/upstream-merge/SKILL.md) and follow the full workflow. Start with `./fork-docs/scripts/merge-upstream.sh --fetch-only`. If user did not say "merge"/"sync" explicitly, report only unless they confirm merge. |
+| `upstream-status` | `upstream status`, `behind upstream`, `how far behind`, `upstream report`, `fork status` | Read upstream-merge skill. Run **only** `./fork-docs/scripts/merge-upstream.sh --fetch-only`. Summarize divergence; do not merge. |
+| `upstream-continue` | `continue merge`, `merge continue`, `upstream continue`, `conflicts resolved` | Read upstream-merge skill. Run `./fork-docs/scripts/merge-upstream.sh --continue`. Help resolve any remaining conflicts. |
+| `plex-status` | `plex status`, `plex milestone`, `plex progress` | Read [`fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md`](../../fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md). Report progress table; state next open step. Do not implement unless asked. |
+| `next-step` | `next step`, `was jetzt`, `continue milestone`, `nächster schritt` | Read active milestone in `fork-docs/milestones/` (most recently updated or user-named). Apply [milestone-implementation-workflow.mdc](milestone-implementation-workflow.mdc): outline approach, wait for confirmation, then implement. |
+| `log-change` | `log change`, `changelog`, `fork changelog`, `document change` | Update [`fork-docs/CHANGELOG.md`](../../fork-docs/CHANGELOG.md) per [changelog-fork.mdc](changelog-fork.mdc). If MSC touched, also update `MediaServiceCore/CHANGELOG_FORK.md`. |
+| `git-commit` | `git commit`, `commit`, `commit changes`, `commit it` | Read [`.cursor/skills/fork-git/SKILL.md`](../skills/fork-git/SKILL.md). Analyze diff, draft **Conventional Commits** message, commit (MSC submodule first if needed). Do not push. |
+| `git-push` | `git push`, `push`, `push changes`, `push it` | Read fork-git skill. Push MSC first if unpushed, then SmartTube root. Never force-push. |
+| `commit-push` | `commit push`, `commit and push`, `commit & push`, `ship`, `ship it` | Read fork-git skill. Full commit workflow, then push workflow. |
+| `fork-help` | `fork help`, `fork commands`, `commands`, `hilfe fork` | Show compact list from [`fork-docs/COMMANDS.md`](../../fork-docs/COMMANDS.md). |
+
+## Router Rules
+
+1. **One command → one workflow.** Do not blend workflows unless the user combines commands in one message.
+2. **Read before act.** For skill-backed commands, read the entire `SKILL.md` before running tools.
+3. **German and English** aliases are equivalent.
+4. **Ambiguous input:** If two commands match, ask once (max one question).
+5. **New commands:** When adding a skill or recurring workflow, register it here and in `fork-docs/COMMANDS.md`.
+
+## Adding New Commands
+
+When creating a new project skill under `.cursor/skills/`:
+
+1. Add a row to this registry with aliases.
+2. Add a row to `fork-docs/COMMANDS.md`.
+3. Put trigger terms in the skill's YAML `description` field.
