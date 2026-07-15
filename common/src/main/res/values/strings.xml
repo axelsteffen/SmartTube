@@ -12,6 +12,8 @@
     <string name="header_channels">Channels</string>
     <string name="header_plex">Plex</string>
     <string name="plex_not_available">Plex integration is not available yet.</string>
+    <string name="plex_signin_to_browse">Sign in to Plex and choose a server to browse your library</string>
+    <string name="plex_signin_coming_soon">Plex sign-in settings coming soon</string>
     <string name="subscriptions_signin_title">See the latest from channels you love</string>
     <string name="subscriptions_signin_subtitle">Sign in to see your subscriptions</string>
     <string name="subscriptions_signin_button_text">SIGN IN</string>

@@ -36,9 +36,9 @@ public final class MediaSourceRegistry {
     }
 
     /**
-     * Feature flag for Plex integration. Disabled until Phase 1.
+     * Feature flag for Plex integration. Enabled from Phase 3.1 (Browse UI).
      */
     public static boolean isPlexEnabled() {
-        return false;
+        return true;
     }
 }

@@ -2,9 +2,11 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 
 import android.content.Context;
 
+import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.PlexDisabledError;
+import com.liskovsoft.smartyoutubetv2.common.app.models.errors.PlexSignInError;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +45,43 @@ public final class SidebarSectionRegistry {
 
         if (!MediaSourceRegistry.isPlexEnabled()) {
             result.add(createPlexDisabledSection(context));
+            return result;
+        }
+
+        if (isPlexReady(context)) {
+            result.add(createPlexBrowseSection(context));
+        } else {
+            result.add(createPlexSignInSection(context));
         }
 
         return result;
+    }
+
+    /** Auth token + selected server present — ready for library rows (Phase 3.2). */
+    public static boolean isPlexReady(Context context) {
+        PlexPrefs prefs = PlexPrefs.instance(context);
+        return prefs.getAuthToken() != null && prefs.getSelectedServer() != null;
+    }
+
+    private static BrowseSection createPlexBrowseSection(Context context) {
+        return new BrowseSection(
+                TYPE_PLEX,
+                context.getString(R.string.header_plex),
+                BrowseSection.TYPE_ROW,
+                R.drawable.icon_playlist,
+                false
+        );
+    }
+
+    private static BrowseSection createPlexSignInSection(Context context) {
+        return new BrowseSection(
+                TYPE_PLEX,
+                context.getString(R.string.header_plex),
+                BrowseSection.TYPE_ERROR,
+                R.drawable.icon_playlist,
+                false,
+                new PlexSignInError(context)
+        );
     }
 
     private static BrowseSection createPlexDisabledSection(Context context) {
