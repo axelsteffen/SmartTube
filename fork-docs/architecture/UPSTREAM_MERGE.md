@@ -45,11 +45,15 @@ Use the **upstream-merge** Cursor skill for AI-assisted conflict resolution.
 
 ## Known Conflict Hotspots
 
+Full file list: [../CHANGELOG.md § Fork Touch Points](../CHANGELOG.md#fork-touch-points) and [conflict reference](../../.cursor/skills/upstream-merge/reference.md).
+
 | Area | Risk | Resolution hint |
 |------|------|-----------------|
 | `MediaServiceCore/mediaserviceinterfaces/` | High | Keep fork additions (e.g. category field); merge upstream interface changes carefully |
 | `MediaServiceCore/youtubeapi/` | Medium | Prefer upstream bugfixes; preserve fork-only files (OpenAPI yaml) |
-| `common/`, `smarttubetv/` | Low–Medium | Keep fork hooks; accept upstream feature/fix changes |
+| `settings.gradle`, `common/build.gradle` | Medium | Keep plex module includes / deps |
+| `Video`, playback controllers, `BrowsePresenter`, ExoPlayer hooks | Medium–High | Keep Plex / `MediaSourceRegistry` branches; accept upstream fixes around them |
+| `common/`, `smarttubetv/` registry call sites | Low | Prefer `MediaSourceRegistry.getServiceManager()` |
 | Submodule pointers in SmartTube | Expected | After MSC/SM merge, commit new SHAs in parent repo |
 
 ## Post-Merge Checklist

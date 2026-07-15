@@ -9,8 +9,8 @@ Design and architecture documentation for this fork.
 | [UPSTREAM_MERGE.md](UPSTREAM_MERGE.md) | Three-repo merge topology, order, conflict hotspots |
 | [../PLAN_FORK_DOCS.md](../PLAN_FORK_DOCS.md) | Plan for fork-docs folder and tooling |
 
-## Planned Topics
+## Related
 
-- Two-fork merge strategy (SmartTube + MediaServiceCore)
-- Modular media sources (YouTube + future Plex) — see [MILESTONE_PLEX_INTEGRATION.md](../milestones/MILESTONE_PLEX_INTEGRATION.md)
-- Service registry / source routing (fork-only layer)
+- Fork touch points (merge hotspots): [../CHANGELOG.md § Fork Touch Points](../CHANGELOG.md#fork-touch-points)
+- Plex milestone: [MILESTONE_PLEX_INTEGRATION.md](../milestones/MILESTONE_PLEX_INTEGRATION.md)
+- Merge conflict reference: [../../.cursor/skills/upstream-merge/reference.md](../../.cursor/skills/upstream-merge/reference.md)

@@ -6,9 +6,73 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## Fork Touch Points
+
+Stable merge checklist of files that differ from [upstream](https://github.com/yuliskov/SmartTube). Chronological detail stays under `[Unreleased]` below. Kept in sync with [.cursor/skills/upstream-merge/reference.md](../.cursor/skills/upstream-merge/reference.md).
+
+### Upstream files with fork hooks (conflict hotspots)
+
+| File / area | Fork change | Merge hint |
+|-------------|-------------|------------|
+| `settings.gradle` | Includes `:plexserviceinterfaces`, `:plexapi` | Keep module includes |
+| `common/build.gradle` | Depends on `plexserviceinterfaces` + `plexapi` | Keep deps |
+| `common/.../data/Video.java` | `mediaSource`, `isPlex()` / `isYouTube()`, serialize | Keep field + helpers around upstream edits |
+| `common/.../presenters/BrowsePresenter.java` | Sidebar registry, `TYPE_PLEX`, pagination, Plex errors | Keep Plex branches |
+| `common/.../presenters/ChannelUploadsPresenter.java` | Plex show/season/library grid | Keep Plex `obtainUploadsObservable` branch |
+| `common/.../presenters/SignInPresenter.java` | Dispatches to `PlexSignInPresenter` | Keep dispatch |
+| `common/.../misc/AppDataSourceManager.java` | Plex settings tile | Keep when enabled |
+| `common/.../playback/controllers/VideoLoaderController.java` | Plex format load, subs, audio reload, transcode | Keep Plex paths |
+| `common/.../playback/controllers/VideoStateController.java` | Plex timeline + preferred audio | Keep Plex branches |
+| `common/.../playback/controllers/SuggestionsController.java` | Skip YT metadata for Plex | Keep `isPlex()` guard |
+| `common/.../playback/controllers/ErrorFixerController.java` | Transcode fallback + skip YT remediations | Keep Plex error path |
+| `common/.../playback/controllers/PlayerUIController.java` | Skip Like/Subscribe for Plex | Keep guards |
+| `common/.../playback/controllers/CommentsController.java` | Skip comments for Plex | Keep guard |
+| `common/.../playback/controllers/ChatController.java` | Skip live chat for Plex | Keep guard |
+| `common/.../playback/controllers/SponsorBlockController.java` | SponsorBlock only for YouTube | Keep `isYouTube()` check |
+| `common/.../playback/controllers/HQDialogController.java` | Plex HLS audio track list | Keep Plex audio UI |
+| `common/.../playback/manager/PlayerEngine.java` | Subtitle/audio overloads | Keep API additions |
+| `common/.../exoplayer/ExoMediaSourceFactory.java` | `mergeExternalSubtitles()` | Keep helper |
+| `common/.../exoplayer/controller/ExoPlayerController.java` | Subtitle merge + preferred audio lang | Keep overloads |
+| `common/.../exoplayer/selector/TrackSelectorManager.java` | `setPreferredAudioLanguage` | Keep method |
+| `common/src/main/res/values/strings.xml` | Plex UI / error strings | Keep `plex_*` keys |
+| `smarttubetv/.../PlaybackFragment.java` | Implements subtitle/audio open APIs | Keep overrides |
+| `smarttubetv/.../EmbedPlayerView.java` | Same as PlaybackFragment | Keep overrides |
+| `smarttubetv/.../StoryboardManager.java` | `MediaSourceRegistry.getServiceManager()` | Keep registry call |
+| `common/.../ChannelGroupServiceWrapper.java` | Registry / service access | Keep registry; accept upstream fixes around it |
+| ~20 presenters/controllers/misc | `YouTubeServiceManager.instance()` → `MediaSourceRegistry.getServiceManager()` | Re-apply if upstream reintroduces direct calls |
+
+### Fork-only (no upstream counterpart — low merge risk)
+
+| Path | Role |
+|------|------|
+| `plexserviceinterfaces/` | Plex API contracts |
+| `plexapi/` | Plex API impl, adapters, OpenAPI, tests |
+| `common/.../misc/MediaSourceRegistry.java` | Source registry (`YOUTUBE` / `PLEX`) |
+| `common/.../misc/SidebarSectionRegistry.java` | Sidebar sections id ≥ 100 |
+| `common/.../misc/PlexPlaybackHelper.java` | Format resolve, timeline, audio, errors |
+| `common/.../presenters/PlexBrowsePresenter.java` | Library browse + pagination |
+| `common/.../presenters/PlexSignInPresenter.java` | PIN sign-in |
+| `common/.../presenters/dialogs/PlexServerSelectionPresenter.java` | Server picker |
+| `common/.../presenters/settings/PlexSettingsPresenter.java` | Plex settings |
+| `common/.../errors/PlexDisabledError.java`, `PlexSignInError.java`, `PlexMessageError.java` | Browse error fragments |
+| `fork-docs/`, `.cursor/skills/`, `.cursor/rules/fork-*.mdc` | Docs, merge/commit skills, command router |
+
+### MediaServiceCore (submodule)
+
+See [MediaServiceCore/CHANGELOG_FORK.md](../MediaServiceCore/CHANGELOG_FORK.md). Summary: category field on `MediaItemFormatInfo` + parsing; fork-only `openapi-youtube-api-in-code.yaml`.
+
+### leanbackassistant
+
+Unchanged: still uses `YouTubeServiceManager` directly (circular dep with `common` / `MediaSourceRegistry`). Candidate for Phase 5.3 if a dependency-safe approach is found.
+
+---
+
 ## [Unreleased]
 
 ### fork-docs
+- **fork-docs/CHANGELOG.md**: Phase 5.1 — added stable **Fork Touch Points** section (upstream hotspots + fork-only modules + MSC summary).
+- **.cursor/skills/upstream-merge/reference.md**: Synced Known Fork Touch Points with Phase 5.1 list (removed “planned” Plex stub).
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.1 marked done; Phase 5 progress split per step.
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
 - **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Phase 4.3 done (audio track selection + HLS reload). Phase 4.4 done (disable YouTube-only features for Plex). Phase 4.5 done (Direct Play → forced HLS transcode on engine error). Phase 4.6 done (Plex error classification + skip YT remediations). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
