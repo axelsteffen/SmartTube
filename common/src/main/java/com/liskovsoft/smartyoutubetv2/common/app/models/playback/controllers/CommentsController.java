@@ -11,6 +11,7 @@ import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.BasePlayerController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.CommentsReceiver;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.CommentsReceiver.Backup;
@@ -125,6 +126,12 @@ public class CommentsController extends BasePlayerController {
     @Override
     public void onButtonClicked(int buttonId, int buttonState) {
         if (buttonId == R.id.action_chat) {
+            // Comments are YouTube-only (Phase 4.4)
+            Video video = getVideo();
+            if (video != null && video.isPlex()) {
+                return;
+            }
+
             if (mCommentsKey != null && mLiveChatKey == null) {
                 openCommentsDialog();
             }

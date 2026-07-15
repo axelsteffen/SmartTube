@@ -133,6 +133,11 @@ public class SponsorBlockController extends BasePlayerController {
             return;
         }
 
+        // Plex: YouTube-only (Phase 4.4) — do not toggle global SponsorBlock from a Plex item
+        if (buttonId == R.id.action_content_block && !checkVideo(getVideo())) {
+            return;
+        }
+
         if (buttonId == R.id.action_content_block) {
             List<SponsorSegment> foundSegments = findMatchedSegments(getPlayer().getPositionMs(), mOriginalSegments, true);
 
@@ -162,8 +167,9 @@ public class SponsorBlockController extends BasePlayerController {
     }
 
     private boolean checkVideo(Video video) {
+        // SponsorBlock is YouTube-only (Phase 4.4) — skip Plex ratingKeys
         //return video != null && !video.isLive && !video.isUpcoming;
-        return video != null;
+        return video != null && video.isYouTube();
     }
 
     private void updateSponsorSegmentsAndWatch(Video item) {

@@ -372,15 +372,19 @@ public class PlayerUIController extends BasePlayerController {
         if (getPlayerData().getSeekPreviewMode() != PlayerData.SEEK_PREVIEW_NONE) {
             getPlayer().loadStoryboard();
         }
-        getPlayer().setButtonState(R.id.action_thumbs_up, metadata.getLikeStatus() == MediaItemMetadata.LIKE_STATUS_LIKE ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
-        getPlayer().setButtonState(R.id.action_thumbs_down, metadata.getLikeStatus() == MediaItemMetadata.LIKE_STATUS_DISLIKE ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
-        if (getPlayerTweaksData().isRealChannelIconEnabled()) {
-            getPlayer().setChannelIcon(metadata.getAuthorImageUrl());
+        // Like / dislike / subscribe are YouTube-only (Phase 4.4)
+        Video video = getVideo();
+        if (video == null || video.isYouTube()) {
+            getPlayer().setButtonState(R.id.action_thumbs_up, metadata.getLikeStatus() == MediaItemMetadata.LIKE_STATUS_LIKE ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+            getPlayer().setButtonState(R.id.action_thumbs_down, metadata.getLikeStatus() == MediaItemMetadata.LIKE_STATUS_DISLIKE ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+            if (getPlayerTweaksData().isRealChannelIconEnabled()) {
+                getPlayer().setChannelIcon(metadata.getAuthorImageUrl());
+            }
+            setPlaylistAddButtonStateCached();
+            getPlayer().setButtonState(R.id.action_subscribe, metadata.isSubscribed() ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
         }
-        setPlaylistAddButtonStateCached();
         setSubtitleButtonState();
         getPlayer().setButtonState(R.id.action_rotate, getPlayerData().getRotationAngle() == 0 ? PlayerUI.BUTTON_OFF : PlayerUI.BUTTON_ON);
-        getPlayer().setButtonState(R.id.action_subscribe, metadata.isSubscribed() ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
         getPlayer().setButtonState(R.id.action_afr, getPlayerData().isAfrEnabled() ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
     }
 
@@ -424,6 +428,12 @@ public class PlayerUIController extends BasePlayerController {
         if (getPlayer() == null)
             return;
 
+        // Dislike is YouTube-only (Phase 4.4)
+        Video video = getVideo();
+        if (video != null && video.isPlex()) {
+            return;
+        }
+
         boolean dislike = buttonState == PlayerUI.BUTTON_ON;
 
         getPlayer().setButtonState(R.id.action_thumbs_down, !dislike ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
@@ -448,6 +458,12 @@ public class PlayerUIController extends BasePlayerController {
 
     private void onLikeClicked(int buttonState) {
         if (getPlayer() == null) {
+            return;
+        }
+
+        // Like is YouTube-only (Phase 4.4)
+        Video video = getVideo();
+        if (video != null && video.isPlex()) {
             return;
         }
 
@@ -628,6 +644,11 @@ public class PlayerUIController extends BasePlayerController {
         if (buttonId == R.id.action_screen_dimming) {
             showScreenOffDialog();
         } else if (buttonId == R.id.action_subscribe || buttonId == R.id.action_channel) {
+            // Subscribe / channel notifications are YouTube-only (Phase 4.4)
+            Video video = getVideo();
+            if (video != null && video.isPlex()) {
+                return;
+            }
             showNotificationsDialog();
         } else if (buttonId == R.id.action_sound_off) {
             showSoundOffDialog();
@@ -999,6 +1020,11 @@ public class PlayerUIController extends BasePlayerController {
 
     private void onSubscribe(int buttonState) {
         if (getPlayer() == null || getVideo() == null) {
+            return;
+        }
+
+        // Subscribe is YouTube-only (Phase 4.4)
+        if (getVideo().isPlex()) {
             return;
         }
 

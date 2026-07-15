@@ -6,6 +6,7 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.BasePlayerController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.ChatReceiver;
@@ -37,6 +38,13 @@ public class ChatController extends BasePlayerController {
     @Override
     public void onMetadata(MediaItemMetadata metadata) {
         if (getPlayer() == null) {
+            return;
+        }
+
+        // Live chat is YouTube-only (Phase 4.4)
+        Video video = getVideo();
+        if (video != null && video.isPlex()) {
+            mLiveChatKey = null;
             return;
         }
 
@@ -80,6 +88,10 @@ public class ChatController extends BasePlayerController {
     @Override
     public void onButtonClicked(int buttonId, int buttonState) {
         if (buttonId == R.id.action_chat) {
+            Video video = getVideo();
+            if (video != null && video.isPlex()) {
+                return;
+            }
             if (mLiveChatKey != null) {
                 enableLiveChat(buttonState != PlayerUI.BUTTON_ON);
             }
@@ -89,6 +101,10 @@ public class ChatController extends BasePlayerController {
     @Override
     public void onButtonLongClicked(int buttonId, int buttonState) {
         if (buttonId == R.id.action_chat) {
+            Video video = getVideo();
+            if (video != null && video.isPlex()) {
+                return;
+            }
             String chatCategoryTitle = getContext().getString(R.string.open_chat);
 
             AppDialogPresenter settingsPresenter = AppDialogPresenter.instance(getContext());
