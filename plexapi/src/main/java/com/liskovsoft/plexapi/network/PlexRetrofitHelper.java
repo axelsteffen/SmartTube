@@ -7,7 +7,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Retrofit factory for plex.tv (and later local PMS) calls.
+ * Retrofit factory for plex.tv and per-server PMS calls.
  */
 public final class PlexRetrofitHelper {
     public static final String DEFAULT_PLEX_TV_BASE_URL = "https://plex.tv/";
@@ -18,7 +18,7 @@ public final class PlexRetrofitHelper {
     private PlexRetrofitHelper() {
     }
 
-    /** Override base URL (MockWebServer). Resets cached Retrofit clients. */
+    /** Override plex.tv base URL (MockWebServer). Resets cached HTTP client. */
     public static synchronized void setPlexTvBaseUrl(String baseUrl) {
         sPlexTvBaseUrl = baseUrl != null ? baseUrl : DEFAULT_PLEX_TV_BASE_URL;
         sClient = null;
@@ -31,6 +31,15 @@ public final class PlexRetrofitHelper {
 
     public static <T> T createPlexTvApi(Class<T> clazz) {
         return buildRetrofit(sPlexTvBaseUrl).create(clazz);
+    }
+
+    /**
+     * PMS Retrofit for a server connection URI.
+     *
+     * @param baseUrl connection {@code uri} from plex.tv resources (trailing slash optional)
+     */
+    public static <T> T createPmsApi(String baseUrl, Class<T> clazz) {
+        return buildRetrofit(PlexUrlHelper.normalizeBaseUrl(baseUrl)).create(clazz);
     }
 
     private static Retrofit buildRetrofit(String baseUrl) {

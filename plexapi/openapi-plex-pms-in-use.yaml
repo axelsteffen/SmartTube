@@ -1,0 +1,470 @@
+# OpenAPI 3.0 – Plex APIs used (or planned) by SmartTube plexapi PoC
+# Derived from: https://developer.plex.tv/pms/ (PMS 1.2.2) + plex.tv auth/resources
+# Scope: Phase 1.3–1.6 only — not a full PMS mirror.
+
+openapi: 3.0.3
+info:
+  title: Plex API (in-use / PoC)
+  description: |
+    Scoped OpenAPI for SmartTube fork `plexapi`:
+    - plex.tv PIN auth + server resources
+    - Plex Media Server: identity, library sections, section items, metadata, parts, transcode decision
+    Common conventions (API Info):
+    - Prefer `Accept: application/json`
+    - Auth via `X-Plex-Token` (header or query)
+    - Client identity via `X-Plex-*` headers
+    - List paging via `X-Plex-Container-Start` / `X-Plex-Container-Size`
+    - Navigate via response `key` resolution (relative to parent path)
+  version: 0.1.0
+  contact:
+    name: SmartTube fork / plexapi
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: https://plex.tv
+    description: plex.tv (auth, resources)
+  - url: https://{host}:{port}
+    description: Local / remote Plex Media Server
+    variables:
+      host:
+        default: 127.0.0.1
+      port:
+        default: "32400"
+
+tags:
+  - name: plex-tv-auth
+    description: PIN claim flow (legacy / still used for TV clients)
+  - name: plex-tv-resources
+    description: Discover PMS instances linked to the account
+  - name: pms-general
+    description: Server identity / info
+  - name: pms-library
+    description: Libraries (sections) and items
+  - name: pms-metadata
+    description: Metadata detail (Media / Part keys)
+  - name: pms-transcode
+    description: Playback decision / stream resolution
+
+components:
+  parameters:
+    XPlexTokenHeader:
+      name: X-Plex-Token
+      in: header
+      required: false
+      schema: { type: string }
+      description: Auth token from plex.tv (also accepted as query param)
+    XPlexClientIdentifier:
+      name: X-Plex-Client-Identifier
+      in: header
+      required: true
+      schema: { type: string }
+    XPlexProduct:
+      name: X-Plex-Product
+      in: header
+      required: false
+      schema: { type: string }
+      description: e.g. SmartTube
+    XPlexVersion:
+      name: X-Plex-Version
+      in: header
+      required: false
+      schema: { type: string }
+    XPlexPlatform:
+      name: X-Plex-Platform
+      in: header
+      required: false
+      schema: { type: string }
+    XPlexDevice:
+      name: X-Plex-Device
+      in: header
+      required: false
+      schema: { type: string }
+    AcceptJson:
+      name: Accept
+      in: header
+      required: false
+      schema:
+        type: string
+        default: application/json
+    ContainerStart:
+      name: X-Plex-Container-Start
+      in: header
+      required: false
+      schema: { type: integer, minimum: 0 }
+    ContainerSize:
+      name: X-Plex-Container-Size
+      in: header
+      required: false
+      schema: { type: integer, minimum: 0 }
+
+  schemas:
+    MediaContainer:
+      type: object
+      description: Root envelope for most PMS JSON responses
+      properties:
+        size: { type: integer }
+        totalSize: { type: integer }
+        offset: { type: integer }
+        allowSync: { type: boolean }
+        identifier: { type: string }
+        librarySectionID: { type: integer }
+        librarySectionTitle: { type: string }
+        machineIdentifier: { type: string }
+        friendlyName: { type: string }
+        version: { type: string }
+        claimed: { type: boolean }
+        Directory:
+          type: array
+          items: { $ref: "#/components/schemas/Directory" }
+        Metadata:
+          type: array
+          items: { $ref: "#/components/schemas/Metadata" }
+
+    MediaContainerResponse:
+      type: object
+      properties:
+        MediaContainer:
+          $ref: "#/components/schemas/MediaContainer"
+
+    Directory:
+      type: object
+      description: Library section (or other directory node)
+      properties:
+        key: { type: string, description: "Section id (e.g. \"1\") or relative path" }
+        title: { type: string }
+        type: { type: string, description: "movie | show | artist | photo | ..." }
+        agent: { type: string }
+        refreshing: { type: boolean }
+        uuid: { type: string }
+        Location:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              path: { type: string }
+
+    Metadata:
+      type: object
+      description: Movie/show/episode/… item
+      properties:
+        ratingKey: { type: string }
+        key: { type: string, description: "e.g. /library/metadata/1049" }
+        type: { type: string, description: "movie | show | season | episode | …” }
+        title: { type: string }
+        summary: { type: string }
+        year: { type: integer }
+        duration: { type: integer, description: Milliseconds }
+        thumb: { type: string, description: Relative path under PMS base URL }
+        art: { type: string }
+        Media:
+          type: array
+          items: { $ref: "#/components/schemas/Media" }
+
+    Media:
+      type: object
+      properties:
+        id: { type: integer }
+        duration: { type: integer }
+        bitrate: { type: integer }
+        width: { type: integer }
+        height: { type: integer }
+        container: { type: string }
+        videoCodec: { type: string }
+        audioCodec: { type: string }
+        Part:
+          type: array
+          items: { $ref: "#/components/schemas/Part" }
+
+    Part:
+      type: object
+      properties:
+        id: { type: integer }
+        key: { type: string, description: "e.g. /library/parts/827/… — Direct Play path" }
+        duration: { type: integer }
+        size: { type: integer }
+        container: { type: string }
+        file: { type: string }
+        decision: { type: string, description: "directplay | transcode (decision endpoint)" }
+        protocol: { type: string, description: "hls | dash | http (decision endpoint)" }
+
+    PlexPin:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string }
+        authToken: { type: string, nullable: true }
+        expiresIn: { type: integer }
+
+    PlexResourceConnection:
+      type: object
+      properties:
+        protocol: { type: string }
+        address: { type: string }
+        port: { type: integer }
+        uri: { type: string }
+        local: { type: boolean }
+
+    PlexResource:
+      type: object
+      description: plex.tv account resource (PMS)
+      properties:
+        name: { type: string }
+        product: { type: string }
+        productVersion: { type: string }
+        platform: { type: string }
+        clientIdentifier: { type: string }
+        owned: { type: boolean }
+        presence: { type: boolean }
+        provides: { type: string }
+        publicAddress: { type: string }
+        accessToken: { type: string }
+        connections:
+          type: array
+          items: { $ref: "#/components/schemas/PlexResourceConnection" }
+
+paths:
+  # ---------- plex.tv ----------
+  /api/v2/pins:
+    post:
+      tags: [plex-tv-auth]
+      summary: Create PIN for device claim
+      description: "Code: PlexTvApi.createPin. Query strong=true recommended."
+      operationId: createPin
+      servers:
+        - url: https://plex.tv
+      parameters:
+        - $ref: "#/components/parameters/XPlexClientIdentifier"
+        - $ref: "#/components/parameters/XPlexProduct"
+        - $ref: "#/components/parameters/AcceptJson"
+        - name: strong
+          in: query
+          schema: { type: boolean, default: true }
+      responses:
+        "200":
+          description: PIN created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlexPin" }
+
+  /api/v2/pins/{id}:
+    get:
+      tags: [plex-tv-auth]
+      summary: Poll PIN until claimed
+      description: "Code: PlexTvApi.checkPin. authToken set when user completes Auth App."
+      operationId: checkPin
+      servers:
+        - url: https://plex.tv
+      parameters:
+        - $ref: "#/components/parameters/XPlexClientIdentifier"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: PIN state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlexPin" }
+
+  /api/v2/resources:
+    get:
+      tags: [plex-tv-resources]
+      summary: List account resources (PMS servers)
+      description: |
+        Code: PlexTvResourcesApi.getResources.
+        Filter clients with product containing "Plex Media Server" / provides containing "server".
+      operationId: getResources
+      servers:
+        - url: https://plex.tv
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/XPlexClientIdentifier"
+        - name: includeHttps
+          in: query
+          schema: { type: integer, enum: [0, 1], default: 1 }
+        - name: includeRelay
+          in: query
+          schema: { type: integer, enum: [0, 1], default: 1 }
+      responses:
+        "200":
+          description: Resource array
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlexResource" }
+
+  # ---------- PMS general ----------
+  /identity:
+    get:
+      tags: [pms-general]
+      summary: Get PMS identity (no auth required)
+      description: "Code: PlexPmsApi.getIdentity — reachability / machineIdentifier."
+      operationId: getIdentity
+      parameters:
+        - $ref: "#/components/parameters/AcceptJson"
+      responses:
+        "200":
+          description: Identity MediaContainer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  /:
+    get:
+      tags: [pms-general]
+      summary: Get PMS info
+      description: "Code: PlexPmsApi.getServerInfo — friendlyName, features (requires token)."
+      operationId: getServerInfo
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/AcceptJson"
+      responses:
+        "200":
+          description: Server MediaContainer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  # ---------- PMS library ----------
+  /library/sections:
+    get:
+      tags: [pms-library]
+      summary: List library sections
+      description: |
+        Docs also expose `/library/sections/all`. Auth sample uses `/library/sections`.
+        Code: PlexPmsApi.getLibrarySections.
+      operationId: getLibrarySections
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/AcceptJson"
+      responses:
+        "200":
+          description: Directories = sections
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  /library/sections/{sectionId}/all:
+    get:
+      tags: [pms-library]
+      summary: Get items in a section
+      description: |
+        Code: PlexPmsApi.getSectionItems.
+        PoC movies: `type=1` (Metadata Types: movie=1).
+        Use Container-Start/Size headers for lazy paging on TV.
+      operationId: getSectionItems
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/AcceptJson"
+        - $ref: "#/components/parameters/ContainerStart"
+        - $ref: "#/components/parameters/ContainerSize"
+        - name: sectionId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: type
+          in: query
+          schema: { type: integer }
+          description: "Metadata type number (1=movie, 2=show, 4=episode, …)"
+      responses:
+        "200":
+          description: Metadata list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  /library/metadata/{ids}:
+    get:
+      tags: [pms-metadata]
+      summary: Get a metadata item (Media + Part)
+      description: "Code: PlexPmsApi.getMetadata. ids = ratingKey (comma-separated allowed)."
+      operationId: getMetadata
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/AcceptJson"
+        - name: ids
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Metadata with Part.key for Direct Play
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
+  /library/parts/{partId}/{changestamp}/{filename}:
+    get:
+      tags: [pms-metadata]
+      summary: Stream a media part (Direct Play)
+      description: |
+        Path usually taken from Part.key as-is.
+        Code builds absolute URL: `{baseUrl}{Part.key}?X-Plex-Token=…`
+        Not typically called via Retrofit JSON; ExoPlayer opens the URL.
+      operationId: getMediaPart
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - name: partId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: changestamp
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: filename
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Binary media stream
+        "503":
+          description: Needs decision / transcode
+        "509":
+          description: Insufficient bandwidth for Direct Play
+
+  /video/:/transcode/universal/decision:
+    get:
+      tags: [pms-transcode]
+      summary: Make a decision on media playback
+      description: |
+        Official path template: `/{transcodeType}/:/transcode/universal/decision`
+        with transcodeType=video for movies.
+        Code: PlexPmsApi.getPlaybackDecision.
+        PoC: path=/library/metadata/{ratingKey}, directPlay=1, protocol=hls.
+      operationId: getPlaybackDecision
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/XPlexClientIdentifier"
+        - $ref: "#/components/parameters/AcceptJson"
+        - name: path
+          in: query
+          required: true
+          schema: { type: string }
+          description: Internal PMS path, e.g. /library/metadata/151671
+        - name: directPlay
+          in: query
+          schema: { type: integer, enum: [0, 1] }
+        - name: directStream
+          in: query
+          schema: { type: integer, enum: [0, 1] }
+        - name: protocol
+          in: query
+          schema: { type: string, enum: [http, hls, dash] }
+        - name: mediaIndex
+          in: query
+          schema: { type: integer }
+        - name: partIndex
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Decision MediaContainer (Part.decision / protocol)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }

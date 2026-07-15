@@ -13,6 +13,8 @@ public final class PlexHeaders {
     public static final String PLATFORM = "X-Plex-Platform";
     public static final String TOKEN = "X-Plex-Token";
     public static final String ACCEPT = "Accept";
+    public static final String CONTAINER_START = "X-Plex-Container-Start";
+    public static final String CONTAINER_SIZE = "X-Plex-Container-Size";
 
     public static final String PRODUCT_VALUE = "SmartTube";
     public static final String VERSION_VALUE = "0.1.0";

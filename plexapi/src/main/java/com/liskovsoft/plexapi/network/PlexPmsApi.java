@@ -1,0 +1,52 @@
+package com.liskovsoft.plexapi.network;
+
+import com.liskovsoft.plexapi.network.dto.MediaContainerResponse;
+
+import retrofit2.Call;
+import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+
+/**
+ * Plex Media Server endpoints used by the Phase 1 PoC.
+ * Base URL = selected server connection URI (trailing slash).
+ *
+ * @see plexapi/openapi-plex-pms-in-use.yaml
+ */
+public interface PlexPmsApi {
+    /** Metadata type number for movies (PMS API Info → Types). */
+    int TYPE_MOVIE = 1;
+
+    @GET("identity")
+    Call<MediaContainerResponse> getIdentity();
+
+    @GET("/")
+    Call<MediaContainerResponse> getServerInfo();
+
+    @GET("library/sections")
+    Call<MediaContainerResponse> getLibrarySections();
+
+    @GET("library/sections/{sectionId}/all")
+    Call<MediaContainerResponse> getSectionItems(
+            @Path("sectionId") String sectionId,
+            @Query("type") Integer type,
+            @Header(PlexHeaders.CONTAINER_START) Integer containerStart,
+            @Header(PlexHeaders.CONTAINER_SIZE) Integer containerSize);
+
+    @GET("library/metadata/{ids}")
+    Call<MediaContainerResponse> getMetadata(@Path("ids") String ids);
+
+    /**
+     * Playback decision. Official template uses {@code /{transcodeType}/:/transcode/universal/decision};
+     * for movies {@code transcodeType=video}.
+     */
+    @GET("video/:/transcode/universal/decision")
+    Call<MediaContainerResponse> getPlaybackDecision(
+            @Query("path") String path,
+            @Query("directPlay") Integer directPlay,
+            @Query("directStream") Integer directStream,
+            @Query("protocol") String protocol,
+            @Query("mediaIndex") Integer mediaIndex,
+            @Query("partIndex") Integer partIndex);
+}

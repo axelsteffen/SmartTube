@@ -36,6 +36,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../prefs/PlexPrefs.java**: Persists auth token and stable `X-Plex-Client-Identifier` UUID.
 - **plexapi/.../network/**: `PlexTvApi`, Retrofit helper, `PlexHeadersInterceptor` for plex.tv calls.
 - **plexapi/.../service/PlexSignInServiceImpl.java**: PIN auth (`signInWithPinObserve`) + `setAuthToken`/`signOut` with prefs persistence (Phase 1.3). Server/library/media still stubs until 1.4–1.6.
+- **plexapi/openapi-plex-pms-in-use.yaml** (new): Scoped OpenAPI (PMS 1.2.2 + plex.tv) for PoC endpoints — identity, sections, section items, metadata, parts, playback decision, resources.
+- **plexapi/.../network/PlexPmsApi.java**, **PlexTvResourcesApi.java**: Retrofit contracts for PMS + server discovery.
+- **plexapi/.../network/dto/**: Gson DTOs (`MediaContainer`, `PlexDirectory`, `PlexMetadata`, `PlexMedia`, `PlexPart`, `PlexResource`).
+- **plexapi/.../network/PlexUrlHelper.java**: Absolute Direct Play / thumb URLs with `X-Plex-Token` query.
+- **plexapi/.../network/PlexHeadersInterceptor.java**: Attaches auth token from `PlexPrefs` when present.
 
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_
