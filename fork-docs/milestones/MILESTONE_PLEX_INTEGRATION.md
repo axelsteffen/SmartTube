@@ -134,7 +134,8 @@ SmartTube/                          (Fork)
 | 0 | 0.5 Upstream merge verify | done |
 | 1 | 1.1 plexserviceinterfaces | done |
 | 1 | 1.2 plexapi module | done |
-| 1 | 1.3–1.7 Auth / discovery / library / stream / test | open |
+| 1 | 1.3 Auth (PIN + prefs) | done |
+| 1 | 1.4–1.7 Discovery / library / stream / test | open |
 | 2 | 2.1–2.5 Adapters | open |
 | 3 | 3.1–3.5 Browse UI | open |
 | 4 | 4.1–4.6 Playback polish | open |

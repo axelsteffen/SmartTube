@@ -1,5 +1,8 @@
 package com.liskovsoft.plexapi;
 
+import android.content.Context;
+
+import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.plexapi.service.PlexLibraryServiceImpl;
 import com.liskovsoft.plexapi.service.PlexMediaServiceImpl;
 import com.liskovsoft.plexapi.service.PlexServerServiceImpl;
@@ -11,7 +14,8 @@ import com.liskovsoft.plexserviceinterfaces.PlexSignInService;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
 /**
- * Fork-only entry point for Plex services. Stubbed until Phase 1.3+.
+ * Fork-only entry point for Plex services.
+ * Sign-in (Phase 1.3) is live; server/library/media remain stubs until 1.4–1.6.
  */
 public final class PlexServiceManager implements com.liskovsoft.plexserviceinterfaces.PlexServiceManager {
     private static final String TAG = PlexServiceManager.class.getSimpleName();
@@ -28,6 +32,16 @@ public final class PlexServiceManager implements com.liskovsoft.plexserviceinter
         mServerService = new PlexServerServiceImpl();
         mLibraryService = new PlexLibraryServiceImpl();
         mMediaService = new PlexMediaServiceImpl();
+    }
+
+    /**
+     * Optional early init so {@link PlexPrefs} has a Context before the first plex.tv call
+     * (also covered once {@code GlobalPreferences} is ready).
+     */
+    public static void init(Context context) {
+        if (context != null) {
+            PlexPrefs.instance(context);
+        }
     }
 
     public static com.liskovsoft.plexserviceinterfaces.PlexServiceManager instance() {
