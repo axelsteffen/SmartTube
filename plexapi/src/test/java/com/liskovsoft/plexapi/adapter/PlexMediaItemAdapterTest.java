@@ -49,6 +49,49 @@ public class PlexMediaItemAdapterTest {
     }
 
     @Test
+    public void from_show_mapsAsPlaylistContainer() {
+        PlexMediaItem plex = new PlexMediaItemImpl(
+                "2001", "/library/metadata/2001", "Breaking Bad", "show", 0, null, 2008);
+
+        MediaItem item = PlexMediaItemAdapter.from(plex);
+
+        assertNotNull(item);
+        assertEquals(MediaItem.TYPE_PLAYLIST, item.getType());
+        assertNull(item.getVideoId());
+        assertEquals("2001", item.getPlaylistId());
+        assertTrue(item.hasUploads());
+        assertFalse(item.isMovie());
+    }
+
+    @Test
+    public void from_season_mapsAsPlaylistContainer() {
+        PlexMediaItem plex = new PlexMediaItemImpl(
+                "3001", "/library/metadata/3001", "Season 1", "season", 0, null, 2008);
+
+        MediaItem item = PlexMediaItemAdapter.from(plex);
+
+        assertNotNull(item);
+        assertEquals(MediaItem.TYPE_PLAYLIST, item.getType());
+        assertNull(item.getVideoId());
+        assertEquals("3001", item.getPlaylistId());
+        assertTrue(item.hasUploads());
+    }
+
+    @Test
+    public void from_episode_mapsAsVideo() {
+        PlexMediaItem plex = new PlexMediaItemImpl(
+                "4001", "/library/metadata/4001", "Pilot", "episode", 3_600_000L, null, 2008);
+
+        MediaItem item = PlexMediaItemAdapter.from(plex);
+
+        assertNotNull(item);
+        assertEquals(MediaItem.TYPE_VIDEO, item.getType());
+        assertEquals("4001", item.getVideoId());
+        assertNull(item.getPlaylistId());
+        assertFalse(item.hasUploads());
+    }
+
+    @Test
     public void from_nonMovie_isMovieFalse() {
         PlexMediaItem plex = new PlexMediaItemImpl(
                 "9", "/library/metadata/9", "Episode", "episode", 0, null, 0);

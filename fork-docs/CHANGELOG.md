@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.2 done (sidebar + movie library rows via `PlexBrowsePresenter`). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.3 done (sidebar, library rows, show/season drill-down). Upstream merge verified 2026-07-15 — all repos up to date, no conflicts.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -31,8 +31,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../misc/PlexPlaybackHelper.java** (new): Resolves Plex `MediaItemFormatInfo` via `PlexServiceManager` + adapters for `Video.isPlex()`; uses `RxHelper` for IO/main scheduling (Phase 2.5).
 - **common/.../playback/controllers/VideoLoaderController.java**: Per-video Plex branch in `loadFormatInfo`; VOD HLS via `openHlsUrl` when `containsHlsUrl()` (Phase 2.5).
 - **common/.../playback/controllers/SuggestionsController.java**: Skip YouTube metadata/suggestions for Plex videos (Phase 2.5).
-- **common/.../presenters/PlexBrowsePresenter.java** (new): Loads Plex movie libraries as `MediaGroup` rows (sequential first-page fetch via `PlexMediaGroupAdapter`) for Browse UI (Phase 3.2).
+- **common/.../presenters/PlexBrowsePresenter.java** (new): Loads Plex movie/show libraries as `MediaGroup` rows; resolves show/season children for drill-down (Phase 3.2–3.3).
+- **common/.../presenters/ChannelUploadsPresenter.java**: Plex branch in `obtainUploadsObservable` for show/season drill-down via `PlexBrowsePresenter` (Phase 3.3).
 - **common/.../presenters/BrowsePresenter.java**: Registers `TYPE_PLEX` row mapping from `PlexBrowsePresenter` when Plex is enabled (Phase 3.2).
+- **common/.../misc/PlexPlaybackHelper.java**: Public `resolvePlexMediaItem()`; playlistId fallback for container stubs (Phase 3.3).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -57,7 +59,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../adapter/PlexMediaFormat.java** (new): Minimal `MediaFormat` (`FORMAT_TYPE_REGULAR`) for progressive Direct Play URLs.
 - **plexapi/build.gradle**: Depends on `mediaserviceinterfaces` for the adapters.
 - **plexapi/src/test/.../PlexMediaItemAdapterTest.java**: Mapping + equality unit tests (Phase 2.1).
-- **plexapi/src/test/.../PlexMediaGroupAdapterTest.java**: Title/items/empty/null-safe unit tests (Phase 2.2).
+- **plexserviceinterfaces/.../PlexLibraryService.java**: `getShowsObserve`, `getChildrenObserve` (Phase 3.3).
+- **plexapi/.../network/PlexPmsApi.java**: `TYPE_SHOW`, `getMetadataChildren` (Phase 3.3).
+- **plexapi/.../service/PlexLibraryServiceImpl.java**: Show section items + metadata children fetch (Phase 3.3).
+- **plexapi/.../adapter/PlexMediaItemAdapter.java**: Show/season as `TYPE_PLAYLIST` containers; movie/episode playable (Phase 3.3).
+- **plexapi/.../adapter/PlexMediaGroupAdapter.java**: `fromContainer()` for show/season child grids (Phase 3.3).
+- **plexapi/openapi-plex-pms-in-use.yaml**: `/library/metadata/{ratingKey}/children` (Phase 3.3).
+- **plexapi/src/test/.../PlexLibraryServiceImplTest.java**: Show + children unit tests (Phase 3.3).
+- **plexapi/src/test/.../PlexMediaItemAdapterTest.java**: Show/season/episode mapping tests (Phase 3.3).
+- **plexapi/src/test/.../PlexMediaGroupAdapterTest.java**: `fromContainer` unit test (Phase 3.3).
 - **plexapi/src/test/.../PlexMediaItemFormatInfoTest.java**: Direct Play UrlFormats + HLS manifest mapping unit tests (Phase 2.3).
 - **plexapi/.../media/PlexStreamInfoImpl.java**: Immutable stream info + MIME hints for ExoPlayer.
 - **plexapi/.../library/PlexLibraryImpl.java**, **PlexMediaItemImpl.java**: Maps PMS Directory/Metadata; absolute thumb URLs via `PlexUrlHelper`.

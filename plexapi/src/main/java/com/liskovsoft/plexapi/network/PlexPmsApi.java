@@ -17,6 +17,8 @@ import retrofit2.http.Query;
 public interface PlexPmsApi {
     /** Metadata type number for movies (PMS API Info → Types). */
     int TYPE_MOVIE = 1;
+    /** Metadata type number for TV shows. */
+    int TYPE_SHOW = 2;
 
     @GET("identity")
     Call<MediaContainerResponse> getIdentity();
@@ -39,6 +41,13 @@ public interface PlexPmsApi {
     @GET("library/metadata/{ids}")
     Call<MediaContainerResponse> getMetadata(
             @Path("ids") String ids,
+            @Header(PlexHeaders.TOKEN) String token);
+
+    @GET("library/metadata/{ratingKey}/children")
+    Call<MediaContainerResponse> getMetadataChildren(
+            @Path("ratingKey") String ratingKey,
+            @Header(PlexHeaders.CONTAINER_START) Integer containerStart,
+            @Header(PlexHeaders.CONTAINER_SIZE) Integer containerSize,
             @Header(PlexHeaders.TOKEN) String token);
 
     /**

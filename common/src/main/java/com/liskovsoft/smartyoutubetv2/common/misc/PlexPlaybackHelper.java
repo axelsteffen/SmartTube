@@ -51,6 +51,12 @@ public final class PlexPlaybackHelper {
 
     @Nullable
     static PlexMediaItem resolvePlexItem(@Nullable Video video) {
+        return resolvePlexMediaItem(video);
+    }
+
+    /** Resolves underlying Plex item from a {@link Video} (playback + browse drill-down). */
+    @Nullable
+    public static PlexMediaItem resolvePlexMediaItem(@Nullable Video video) {
         if (video == null || !video.isPlex()) {
             return null;
         }
@@ -61,6 +67,9 @@ public final class PlexPlaybackHelper {
 
         String ratingKey = video.videoId;
         if (ratingKey == null || ratingKey.isEmpty()) {
+            ratingKey = video.playlistId;
+        }
+        if (ratingKey == null || ratingKey.isEmpty()) {
             return null;
         }
 
@@ -69,7 +78,7 @@ public final class PlexPlaybackHelper {
                 ratingKey,
                 null,
                 video.title,
-                "movie",
+                video.hasPlaylist() ? "show" : "movie",
                 0L,
                 video.cardImageUrl,
                 0);

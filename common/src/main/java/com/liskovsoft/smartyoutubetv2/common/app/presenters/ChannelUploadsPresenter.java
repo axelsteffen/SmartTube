@@ -164,6 +164,12 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
             return null;
         }
 
+        Observable<MediaGroup> plexGroup = PlexBrowsePresenter.getChildrenGroupObserve(item);
+        if (plexGroup != null) {
+            disposeActions();
+            return plexGroup;
+        }
+
         if (item.mediaItem == null) {
             item.mediaItem = SimpleMediaItem.from(item);
         }

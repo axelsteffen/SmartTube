@@ -397,6 +397,30 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/MediaContainerResponse" }
 
+  /library/metadata/{ratingKey}/children:
+    get:
+      tags: [pms-metadata]
+      summary: List child metadata (seasons or episodes)
+      description: |
+        Show → seasons, season → episodes.
+        Code: PlexPmsApi.getMetadataChildren (Phase 3.3).
+      operationId: getMetadataChildren
+      parameters:
+        - $ref: "#/components/parameters/XPlexTokenHeader"
+        - $ref: "#/components/parameters/AcceptJson"
+        - $ref: "#/components/parameters/ContainerStart"
+        - $ref: "#/components/parameters/ContainerSize"
+        - name: ratingKey
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Child metadata list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaContainerResponse" }
+
   /library/parts/{partId}/{changestamp}/{filename}:
     get:
       tags: [pms-metadata]

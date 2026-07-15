@@ -17,6 +17,8 @@ import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
  */
 public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaItem {
     private static final String TYPE_MOVIE = "movie";
+    private static final String TYPE_SHOW = "show";
+    private static final String TYPE_SEASON = "season";
 
     private final PlexMediaItem mItem;
     private final int mId;
@@ -42,7 +44,7 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public int getType() {
-        return TYPE_VIDEO;
+        return isContainer() ? TYPE_PLAYLIST : TYPE_VIDEO;
     }
 
     @Override
@@ -87,7 +89,7 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public String getPlaylistId() {
-        return null;
+        return isContainer() ? mItem.getRatingKey() : null;
     }
 
     @Override
@@ -128,7 +130,7 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public String getVideoId() {
-        return mItem.getRatingKey();
+        return isContainer() ? null : mItem.getRatingKey();
     }
 
     @Override
@@ -219,7 +221,7 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
 
     @Override
     public boolean hasUploads() {
-        return false;
+        return isContainer();
     }
 
     @Override
@@ -235,14 +237,28 @@ public final class PlexMediaItemAdapter implements MediaItem, PlexBackedMediaIte
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof MediaItem) {
+            MediaItem other = (MediaItem) obj;
+            if (isContainer()) {
+                String playlistId = getPlaylistId();
+                return playlistId != null && playlistId.equals(other.getPlaylistId());
+            }
             String videoId = getVideoId();
-            return videoId != null && videoId.equals(((MediaItem) obj).getVideoId());
+            return videoId != null && videoId.equals(other.getVideoId());
         }
         return false;
     }
 
+    private boolean isContainer() {
+        String type = mItem.getType();
+        return TYPE_SHOW.equalsIgnoreCase(type) || TYPE_SEASON.equalsIgnoreCase(type);
+    }
+
     @Override
     public int hashCode() {
+        if (isContainer()) {
+            String playlistId = getPlaylistId();
+            return playlistId != null ? playlistId.hashCode() : 0;
+        }
         String videoId = getVideoId();
         return videoId != null ? videoId.hashCode() : 0;
     }

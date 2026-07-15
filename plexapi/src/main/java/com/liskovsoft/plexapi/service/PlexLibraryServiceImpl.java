@@ -23,7 +23,7 @@ import io.reactivex.Observable;
 import retrofit2.Response;
 
 /**
- * Lists PMS library sections and the first page of movies (Phase 1.5).
+ * Lists PMS library sections, section items, and metadata children (Phase 1.5 / 3.3).
  */
 public class PlexLibraryServiceImpl implements PlexLibraryService {
     private static final String TAG = PlexLibraryServiceImpl.class.getSimpleName();
@@ -56,7 +56,17 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
 
     @Override
     public Observable<List<PlexMediaItem>> getMoviesObserve(PlexLibrary library) {
-        return Observable.fromCallable(() -> fetchMovies(library));
+        return Observable.fromCallable(() -> fetchSectionItems(library, PlexPmsApi.TYPE_MOVIE, "movie"));
+    }
+
+    @Override
+    public Observable<List<PlexMediaItem>> getShowsObserve(PlexLibrary library) {
+        return Observable.fromCallable(() -> fetchSectionItems(library, PlexPmsApi.TYPE_SHOW, "show"));
+    }
+
+    @Override
+    public Observable<List<PlexMediaItem>> getChildrenObserve(PlexMediaItem parent) {
+        return Observable.fromCallable(() -> fetchChildren(parent));
     }
 
     private List<PlexLibrary> fetchLibraries() throws IOException {
@@ -79,7 +89,8 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
         return libraries;
     }
 
-    private List<PlexMediaItem> fetchMovies(PlexLibrary library) throws IOException {
+    private List<PlexMediaItem> fetchSectionItems(PlexLibrary library, int type, String label)
+            throws IOException {
         if (library == null || library.getKey() == null || library.getKey().isEmpty()) {
             throw new IllegalArgumentException("library with key required");
         }
@@ -90,20 +101,43 @@ public class PlexLibraryServiceImpl implements PlexLibraryService {
         String sectionId = sectionIdFromKey(library.getKey());
 
         Response<MediaContainerResponse> response = api.getSectionItems(
-                sectionId, PlexPmsApi.TYPE_MOVIE, 0, mPageSize, token).execute();
-        MediaContainer container = requireContainer(response, "list movies for section " + sectionId);
+                sectionId, type, 0, mPageSize, token).execute();
+        MediaContainer container = requireContainer(response, "list " + label + " for section " + sectionId);
 
-        List<PlexMediaItem> movies = new ArrayList<>();
+        List<PlexMediaItem> items = mapMetadata(container, server, token);
+        Log.d(TAG, "Listed " + items.size() + " " + label + "(s) from section " + sectionId);
+        return items;
+    }
+
+    private List<PlexMediaItem> fetchChildren(PlexMediaItem parent) throws IOException {
+        if (parent == null || parent.getRatingKey() == null || parent.getRatingKey().isEmpty()) {
+            throw new IllegalArgumentException("parent with ratingKey required");
+        }
+
+        PlexServer server = requireSelectedServer();
+        PlexPmsApi api = pmsApi(server);
+        String token = pmsToken(server);
+
+        Response<MediaContainerResponse> response = api.getMetadataChildren(
+                parent.getRatingKey(), 0, mPageSize, token).execute();
+        MediaContainer container = requireContainer(response,
+                "list children for ratingKey " + parent.getRatingKey());
+
+        List<PlexMediaItem> items = mapMetadata(container, server, token);
+        Log.d(TAG, "Listed " + items.size() + " child item(s) for " + parent.getTitle());
+        return items;
+    }
+
+    private List<PlexMediaItem> mapMetadata(MediaContainer container, PlexServer server, String token) {
+        List<PlexMediaItem> items = new ArrayList<>();
         for (PlexMetadata metadata : container.getMetadata()) {
             PlexMediaItemImpl item = PlexMediaItemImpl.fromMetadata(
                     metadata, server.getBaseUrl(), token);
             if (item != null) {
-                movies.add(item);
+                items.add(item);
             }
         }
-
-        Log.d(TAG, "Listed " + movies.size() + " movie(s) from section " + sectionId);
-        return movies;
+        return items;
     }
 
     private PlexServer requireSelectedServer() {

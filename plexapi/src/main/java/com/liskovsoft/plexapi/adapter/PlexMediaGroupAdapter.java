@@ -19,10 +19,14 @@ import java.util.List;
  */
 public final class PlexMediaGroupAdapter implements MediaGroup {
     private final PlexLibrary mLibrary;
+    private final PlexMediaItem mContainer;
     private final List<MediaItem> mMediaItems;
 
-    private PlexMediaGroupAdapter(PlexLibrary library, List<MediaItem> mediaItems) {
+    private PlexMediaGroupAdapter(@Nullable PlexLibrary library,
+                                  @Nullable PlexMediaItem container,
+                                  List<MediaItem> mediaItems) {
         mLibrary = library;
+        mContainer = container;
         mMediaItems = mediaItems;
     }
 
@@ -48,12 +52,42 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
 
         // Match YouTubeMediaGroup: null when empty (avoids duplicate-append quirks)
         List<MediaItem> result = mediaItems.isEmpty() ? null : mediaItems;
-        return new PlexMediaGroupAdapter(library, result);
+        return new PlexMediaGroupAdapter(library, null, result);
+    }
+
+    /**
+     * Children of a show or season (Phase 3.3 drill-down).
+     */
+    @Nullable
+    public static PlexMediaGroupAdapter fromContainer(@Nullable PlexMediaItem container,
+                                                      @Nullable List<PlexMediaItem> items) {
+        if (container == null || container.getRatingKey() == null || container.getRatingKey().isEmpty()) {
+            return null;
+        }
+
+        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        if (items != null) {
+            for (PlexMediaItem item : items) {
+                MediaItem adapted = PlexMediaItemAdapter.from(item);
+                if (adapted != null) {
+                    mediaItems.add(adapted);
+                }
+            }
+        }
+
+        List<MediaItem> result = mediaItems.isEmpty() ? null : mediaItems;
+        return new PlexMediaGroupAdapter(null, container, result);
     }
 
     /** Underlying Plex library (section key for later pagination / drill-down). */
     public PlexLibrary getPlexLibrary() {
         return mLibrary;
+    }
+
+    /** Parent show/season when this group lists children. */
+    @Nullable
+    public PlexMediaItem getPlexContainer() {
+        return mContainer;
     }
 
     @Override
@@ -69,7 +103,10 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
 
     @Override
     public String getTitle() {
-        return mLibrary.getTitle();
+        if (mLibrary != null) {
+            return mLibrary.getTitle();
+        }
+        return mContainer != null ? mContainer.getTitle() : null;
     }
 
     @Override
@@ -77,10 +114,13 @@ public final class PlexMediaGroupAdapter implements MediaGroup {
         return null;
     }
 
-    /** Plex library section key — reserved for continuation / pagination. */
+    /** Plex library section key or parent ratingKey — reserved for pagination. */
     @Override
     public String getParams() {
-        return mLibrary.getKey();
+        if (mLibrary != null) {
+            return mLibrary.getKey();
+        }
+        return mContainer != null ? mContainer.getRatingKey() : null;
     }
 
     @Override

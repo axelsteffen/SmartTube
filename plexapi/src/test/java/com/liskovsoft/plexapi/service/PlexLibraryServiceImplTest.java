@@ -6,6 +6,7 @@ import com.liskovsoft.plexapi.network.PlexRetrofitHelper;
 import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.plexapi.server.PlexServerImpl;
 import com.liskovsoft.plexserviceinterfaces.data.PlexLibrary;
+import com.liskovsoft.plexapi.library.PlexMediaItemImpl;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 
 import org.junit.After;
@@ -120,6 +121,59 @@ public class PlexLibraryServiceImplTest {
         assertEquals("0", request.getHeader("X-Plex-Container-Start"));
         assertEquals("50", request.getHeader("X-Plex-Container-Size"));
         assertEquals("server-token", request.getHeader("X-Plex-Token"));
+    }
+
+    @Test
+    public void getShowsObserve_mapsFirstPage() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"2001\","
+                + "\"key\":\"/library/metadata/2001\","
+                + "\"type\":\"show\","
+                + "\"title\":\"Breaking Bad\","
+                + "\"year\":2008"
+                + "}]"
+                + "}}"));
+
+        PlexLibrary library = new PlexLibraryImpl("2", "TV Shows", "show");
+        List<PlexMediaItem> shows = mService.getShowsObserve(library).blockingFirst();
+
+        assertEquals(1, shows.size());
+        assertEquals("2001", shows.get(0).getRatingKey());
+        assertEquals("Breaking Bad", shows.get(0).getTitle());
+        assertEquals("show", shows.get(0).getType());
+
+        RecordedRequest request = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(request);
+        assertTrue(request.getPath().contains("library/sections/2/all"));
+        assertTrue(request.getPath().contains("type=2"));
+    }
+
+    @Test
+    public void getChildrenObserve_mapsSeasonsOrEpisodes() throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"3001\","
+                + "\"key\":\"/library/metadata/3001\","
+                + "\"type\":\"season\","
+                + "\"title\":\"Season 1\","
+                + "\"year\":2008"
+                + "}]"
+                + "}}"));
+
+        PlexMediaItem show = new PlexMediaItemImpl(
+                "2001", "/library/metadata/2001", "Breaking Bad", "show", 0, null, 2008);
+        List<PlexMediaItem> children = mService.getChildrenObserve(show).blockingFirst();
+
+        assertEquals(1, children.size());
+        assertEquals("3001", children.get(0).getRatingKey());
+        assertEquals("season", children.get(0).getType());
+
+        RecordedRequest request = mServer.takeRequest(1, TimeUnit.SECONDS);
+        assertNotNull(request);
+        assertTrue(request.getPath().contains("library/metadata/2001/children"));
     }
 
     @Test

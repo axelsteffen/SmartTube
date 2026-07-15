@@ -88,6 +88,25 @@ public class PlexMediaGroupAdapterTest {
         assertEquals(library, group.getPlexLibrary());
     }
 
+    @Test
+    public void fromContainer_mapsTitleAndChildItems() {
+        PlexMediaItem show = new PlexMediaItemImpl(
+                "2001", "/library/metadata/2001", "Breaking Bad", "show", 0, null, 2008);
+        List<PlexMediaItem> items = Collections.singletonList(
+                new PlexMediaItemImpl("3001", "/k", "Season 1", "season", 0, null, 2008));
+
+        MediaGroup group = PlexMediaGroupAdapter.fromContainer(show, items);
+
+        assertNotNull(group);
+        assertEquals("Breaking Bad", group.getTitle());
+        assertEquals("2001", group.getParams());
+        assertFalse(group.isEmpty());
+        assertEquals(1, group.getMediaItems().size());
+        assertEquals("3001", group.getMediaItems().get(0).getPlaylistId());
+        assertNull(group.getMediaItems().get(0).getVideoId());
+        assertNotNull(((PlexMediaGroupAdapter) group).getPlexContainer());
+    }
+
     private static PlexMediaItem movie(String ratingKey, String title) {
         return new PlexMediaItemImpl(
                 ratingKey, "/library/metadata/" + ratingKey, title, "movie", 0, null, 2020);
