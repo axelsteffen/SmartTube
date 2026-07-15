@@ -963,8 +963,18 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     }
 
     @Override
+    public void openHlsUrl(String hlsPlaylistUrl, MediaItemFormatInfo formatInfo) {
+        mExoPlayerController.openHlsUrl(hlsPlaylistUrl, formatInfo);
+    }
+
+    @Override
     public void openUrlList(List<String> urlList) {
         mExoPlayerController.openUrlList(urlList);
+    }
+
+    @Override
+    public void openUrlList(List<String> urlList, MediaItemFormatInfo formatInfo) {
+        mExoPlayerController.openUrlList(urlList, formatInfo);
     }
 
     @Override

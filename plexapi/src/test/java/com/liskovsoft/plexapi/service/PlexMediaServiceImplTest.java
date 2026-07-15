@@ -191,6 +191,48 @@ public class PlexMediaServiceImplTest {
     }
 
     @Test
+    public void getStreamInfoObserve_collectsExternalSubtitlesSkipsEmbeddedAndPgs()
+            throws Exception {
+        mServer.enqueue(new MockResponse().setResponseCode(200).setBody("{"
+                + "\"MediaContainer\":{"
+                + "\"Metadata\":[{"
+                + "\"ratingKey\":\"1049\","
+                + "\"Media\":[{"
+                + "\"container\":\"mkv\","
+                + "\"Part\":[{"
+                + "\"id\":827,"
+                + "\"key\":\"/library/parts/827/file.mkv\","
+                + "\"container\":\"mkv\","
+                + "\"Stream\":["
+                + "{\"id\":1,\"streamType\":1,\"codec\":\"h264\"},"
+                + "{\"id\":2,\"streamType\":2,\"codec\":\"aac\",\"languageCode\":\"en\"},"
+                + "{\"id\":3,\"streamType\":3,\"codec\":\"srt\",\"languageCode\":\"en\","
+                + "\"displayTitle\":\"English\","
+                + "\"key\":\"/library/streams/3\"},"
+                + "{\"id\":4,\"streamType\":3,\"codec\":\"ass\",\"language\":\"de\","
+                + "\"displayTitle\":\"Deutsch\","
+                + "\"key\":\"/library/streams/4\"},"
+                + "{\"id\":5,\"streamType\":3,\"codec\":\"pgs\",\"languageCode\":\"ja\","
+                + "\"key\":\"/library/streams/5\"},"
+                + "{\"id\":6,\"streamType\":3,\"codec\":\"srt\",\"languageCode\":\"fr\"}"
+                + "]"
+                + "}]"
+                + "}]"
+                + "}]"
+                + "}}"));
+
+        PlexStreamInfo stream = mService.getStreamInfoObserve(movie("1049")).blockingFirst();
+
+        assertEquals(2, stream.getSubtitles().size());
+        assertTrue(stream.getSubtitles().get(0).getUrl().contains("library/streams/3"));
+        assertTrue(stream.getSubtitles().get(0).getUrl().contains("X-Plex-Token=server-token"));
+        assertEquals("en", stream.getSubtitles().get(0).getLanguageCode());
+        assertEquals("srt", stream.getSubtitles().get(0).getCodec());
+        assertEquals("de", stream.getSubtitles().get(1).getLanguageCode());
+        assertEquals("ass", stream.getSubtitles().get(1).getCodec());
+    }
+
+    @Test
     public void updateProgressObserve_reportsTimeline() throws Exception {
         mServer.enqueue(new MockResponse().setResponseCode(200));
 

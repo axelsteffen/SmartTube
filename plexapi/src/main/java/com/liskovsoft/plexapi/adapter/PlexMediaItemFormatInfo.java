@@ -8,8 +8,10 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaItemStoryboard;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaSubtitle;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
+import com.liskovsoft.plexserviceinterfaces.data.PlexSubtitle;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +34,7 @@ public final class PlexMediaItemFormatInfo implements MediaItemFormatInfo {
     private final String mContainer;
     private final boolean mTranscoded;
     private final List<MediaFormat> mUrlFormats;
+    private final List<MediaSubtitle> mSubtitles;
     private String mClickTrackingParams;
 
     private PlexMediaItemFormatInfo(
@@ -41,7 +44,8 @@ public final class PlexMediaItemFormatInfo implements MediaItemFormatInfo {
             String streamUrl,
             String container,
             boolean transcoded,
-            List<MediaFormat> urlFormats) {
+            List<MediaFormat> urlFormats,
+            List<MediaSubtitle> subtitles) {
         mVideoId = videoId;
         mTitle = title;
         mLengthSeconds = lengthSeconds;
@@ -49,6 +53,7 @@ public final class PlexMediaItemFormatInfo implements MediaItemFormatInfo {
         mContainer = container;
         mTranscoded = transcoded;
         mUrlFormats = urlFormats;
+        mSubtitles = subtitles;
     }
 
     /**
@@ -86,7 +91,22 @@ public final class PlexMediaItemFormatInfo implements MediaItemFormatInfo {
                 url,
                 stream.getContainer(),
                 transcoded,
-                urlFormats);
+                urlFormats,
+                mapSubtitles(stream.getSubtitles()));
+    }
+
+    private static List<MediaSubtitle> mapSubtitles(@Nullable List<PlexSubtitle> plexSubtitles) {
+        if (plexSubtitles == null || plexSubtitles.isEmpty()) {
+            return null;
+        }
+        List<MediaSubtitle> mapped = new ArrayList<>(plexSubtitles.size());
+        for (PlexSubtitle plexSubtitle : plexSubtitles) {
+            MediaSubtitle subtitle = PlexMediaSubtitle.from(plexSubtitle);
+            if (subtitle != null) {
+                mapped.add(subtitle);
+            }
+        }
+        return mapped.isEmpty() ? null : mapped;
     }
 
     private static boolean isHlsMime(@Nullable String container) {
@@ -120,7 +140,7 @@ public final class PlexMediaItemFormatInfo implements MediaItemFormatInfo {
 
     @Override
     public List<MediaSubtitle> getSubtitles() {
-        return null;
+        return mSubtitles;
     }
 
     @Override

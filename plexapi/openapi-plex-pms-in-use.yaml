@@ -8,7 +8,7 @@ info:
   description: |
     Scoped OpenAPI for SmartTube fork `plexapi`:
     - plex.tv PIN auth + server resources
-    - Plex Media Server: identity, library sections, section items, metadata, parts, transcode decision
+    - PMS: identity, library sections, section items, metadata (incl. Stream/subtitle keys), parts, transcode decision, timeline
     Common conventions (API Info):
     - Prefer `Accept: application/json`
     - Auth via `X-Plex-Token` (header or query)
@@ -190,6 +190,27 @@ components:
         file: { type: string }
         decision: { type: string, description: "directplay | transcode (decision endpoint)" }
         protocol: { type: string, description: "hls | dash | http (decision endpoint)" }
+        Stream:
+          type: array
+          description: "Video/audio/subtitle streams under the part (Phase 4.2)"
+          items: { $ref: "#/components/schemas/Stream" }
+
+    Stream:
+      type: object
+      description: |
+        Media stream under a Part. streamType: 1=video, 2=audio, 3=subtitle.
+        External subtitle sidecars expose a downloadable `key` (e.g. /library/streams/123).
+      properties:
+        id: { type: integer }
+        streamType: { type: integer, description: "1 video | 2 audio | 3 subtitle" }
+        codec: { type: string, description: "e.g. h264 | aac | srt | ass | vtt | pgs" }
+        language: { type: string }
+        languageCode: { type: string }
+        languageTag: { type: string }
+        displayTitle: { type: string }
+        title: { type: string }
+        key: { type: string, description: "Relative download path for external subtitles" }
+        selected: { type: boolean }
 
     PlexPin:
       type: object

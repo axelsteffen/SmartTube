@@ -12,7 +12,11 @@ public interface PlayerEngine extends PlayerConstants {
     void openDash(InputStream dashManifest);
     void openDashUrl(String dashManifestUrl);
     void openHlsUrl(String hlsPlaylistUrl);
+    /** Opens HLS and optionally merges external text subtitles from {@code formatInfo}. */
+    void openHlsUrl(String hlsPlaylistUrl, MediaItemFormatInfo formatInfo);
     void openUrlList(List<String> urlList);
+    /** Opens URL list and optionally merges external text subtitles from {@code formatInfo}. */
+    void openUrlList(List<String> urlList, MediaItemFormatInfo formatInfo);
     void openMerged(MediaItemFormatInfo formatInfo, String hlsPlaylistUrl);
     void openMerged(InputStream dashManifest, String hlsPlaylistUrl);
     long getPositionMs();

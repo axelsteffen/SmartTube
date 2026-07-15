@@ -361,16 +361,16 @@ public class VideoLoaderController extends BasePlayerController {
         } else if (acceptDashLive(formatInfo)) {
             Log.d(TAG, "Loading live video (current or past live stream) in dash format...");
             player.openDashUrl(formatInfo.getDashManifestUrl());
-        } else if (formatInfo.isLive() && formatInfo.containsHlsUrl()) {
+            } else if (formatInfo.isLive() && formatInfo.containsHlsUrl()) {
             Log.d(TAG, "Loading live video (current or past live stream) in hls format...");
-            player.openHlsUrl(formatInfo.getHlsManifestUrl());
+            player.openHlsUrl(formatInfo.getHlsManifestUrl(), formatInfo);
         } else if (formatInfo.containsHlsUrl()) {
             // VOD HLS (e.g. Plex transcode) — live gate above does not apply
             Log.d(TAG, "Loading VOD video in hls format...");
-            player.openHlsUrl(formatInfo.getHlsManifestUrl());
+            player.openHlsUrl(formatInfo.getHlsManifestUrl(), formatInfo);
         } else if (formatInfo.containsUrlFormats()) {
             Log.d(TAG, "Loading url list video. This is always LQ...");
-            player.openUrlList(formatInfo.createUrlList());
+            player.openUrlList(formatInfo.createUrlList(), formatInfo);
         } else {
             Log.d(TAG, "Empty format info received. Seems future live translation. No video data to pass to the player.");
             player.setTitle(formatInfo.getPlayabilityReason());

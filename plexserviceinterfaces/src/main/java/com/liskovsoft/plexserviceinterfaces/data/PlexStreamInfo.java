@@ -1,5 +1,7 @@
 package com.liskovsoft.plexserviceinterfaces.data;
 
+import java.util.List;
+
 /**
  * Playable stream metadata for ExoPlayer (Direct Play or HLS transcode).
  */
@@ -13,4 +15,7 @@ public interface PlexStreamInfo {
 
     /** PMS {@code viewOffset} captured with metadata (ms); 0 if unknown. */
     long getViewOffsetMs();
+
+    /** External sidecar subtitles (empty if none / unsupported codecs only). */
+    List<PlexSubtitle> getSubtitles();
 }

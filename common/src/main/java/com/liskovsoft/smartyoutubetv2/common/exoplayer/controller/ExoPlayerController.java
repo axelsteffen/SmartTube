@@ -100,32 +100,47 @@ public class ExoPlayerController implements Player.EventListener {
     }
 
     public void openHlsUrl(String hlsPlaylistUrl) {
+        openHlsUrl(hlsPlaylistUrl, null);
+    }
+
+    public void openHlsUrl(String hlsPlaylistUrl, MediaItemFormatInfo formatInfo) {
         MediaSource mediaSource = mMediaSourceFactory.fromHlsPlaylist(hlsPlaylistUrl);
-        openMediaSource(mediaSource);
+        mediaSource = mMediaSourceFactory.mergeExternalSubtitles(mediaSource, formatInfo);
+        openMediaSource(mediaSource, false);
     }
 
     public void openUrlList(List<String> urlList) {
+        openUrlList(urlList, null);
+    }
+
+    public void openUrlList(List<String> urlList, MediaItemFormatInfo formatInfo) {
         MediaSource mediaSource = mMediaSourceFactory.fromUrlList(urlList);
-        openMediaSource(mediaSource);
+        mediaSource = mMediaSourceFactory.mergeExternalSubtitles(mediaSource, formatInfo);
+        openMediaSource(mediaSource, false);
     }
 
     public void openMerged(MediaItemFormatInfo formatInfo, String hlsPlaylistUrl) {
         MediaSource dashMediaSource = mMediaSourceFactory.fromDashFormatInfo(formatInfo);
         MediaSource hlsMediaSource = mMediaSourceFactory.fromHlsPlaylist(hlsPlaylistUrl);
-        openMediaSource(new MergingMediaSource(dashMediaSource, hlsMediaSource));
+        openMediaSource(new MergingMediaSource(dashMediaSource, hlsMediaSource), true);
     }
 
     public void openMerged(InputStream dashManifest, String hlsPlaylistUrl) {
         MediaSource dashMediaSource = mMediaSourceFactory.fromDashManifest(dashManifest);
         MediaSource hlsMediaSource = mMediaSourceFactory.fromHlsPlaylist(hlsPlaylistUrl);
-        openMediaSource(new MergingMediaSource(dashMediaSource, hlsMediaSource));
+        openMediaSource(new MergingMediaSource(dashMediaSource, hlsMediaSource), true);
     }
 
     private void openMediaSource(MediaSource mediaSource) {
+        openMediaSource(mediaSource, false);
+    }
+
+    private void openMediaSource(MediaSource mediaSource, boolean isMergedAdaptiveSource) {
         resetPlayerState(); // fixes occasional video artifacts and problems with quality switching
         setQualityInfo("");
 
-        mTrackSelectorManager.setMergedSource(mediaSource instanceof MergingMediaSource);
+        // Only DASH+HLS merge needs track dedupe; subtitle MergingMediaSource must not.
+        mTrackSelectorManager.setMergedSource(isMergedAdaptiveSource);
         mTrackSelectorManager.invalidate();
         mOnSourceChanged = true;
         mEventListener.onSourceChanged(getVideo());

@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### fork-docs
 - **fork-docs/** (new): Central folder for fork changelog, milestones, architecture notes, and maintenance scripts.
-- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 0 complete (0.1–0.5). Phase 1.1–1.7 done. Phase 2.1–2.5 done. Phase 3.1–3.5 done (sidebar, browse, pagination, PIN settings). Phase 4.1 done (resume sync). Phase 4.2 done (external subtitles). Upstream merge 2026-07-15 (`upstream/master` → `main`): 0 behind after merge; 4 conflicts resolved keeping `MediaSourceRegistry` / Plex module hooks (`Video`, `ErrorFixerController`, `ChannelGroupServiceWrapper`, `settings.gradle`). Upstream brought e.g. SponsorBlock toggle fix, error fixer updates, hide member-only videos.
 - **fork-docs/COMMANDS.md** (new): Quick reference for short agent commands (`sync yuliskov`, `plex status`, …).
 - **.cursor/rules/fork-commands.mdc** (new): Command router — maps short commands to skills/workflows.
 - **.cursor/skills/fork-git/** (new): Conventional Commits commit/push workflow.
@@ -44,6 +44,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **common/.../misc/PlexPlaybackHelper.java**: Public `resolvePlexMediaItem()`; playlistId fallback for container stubs (Phase 3.3).
 - **common/.../misc/PlexPlaybackHelper.java**: Applies PMS `viewOffset` on format resolve; `updateProgress()` → `/:/timeline` (Phase 4.1).
 - **common/.../playback/controllers/VideoStateController.java**: Plex branch in `updateHistory` + per-tickle progress while playing (Phase 4.1).
+- **common/.../exoplayer/ExoMediaSourceFactory.java**: `mergeExternalSubtitles()` — `MergingMediaSource` + `SingleSampleMediaSource` for sidecar text tracks (Phase 4.2).
+- **common/.../exoplayer/controller/ExoPlayerController.java**: `openHlsUrl`/`openUrlList` overloads merge external subs; DASH+HLS merge flag separate from subtitle merge (Phase 4.2).
+- **common/.../playback/manager/PlayerEngine.java**: Overloads `openHlsUrl`/`openUrlList` with `MediaItemFormatInfo` (Phase 4.2).
+- **common/.../playback/controllers/VideoLoaderController.java**: Passes formatInfo into HLS/URL open for subtitle merge (Phase 4.2).
+- **smarttubetv/.../PlaybackFragment.java**, **EmbedPlayerView.java**: Implement subtitle-aware open overloads (Phase 4.2).
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
@@ -106,6 +111,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **plexapi/.../media/PlexStreamInfoImpl.java**: Carry `viewOffsetMs` (Phase 4.1).
 - **plexapi/openapi-plex-pms-in-use.yaml**: `/:/timeline` (Phase 4.1).
 - **plexapi/src/test/...**: Timeline + viewOffset unit tests (Phase 4.1).
+- **plexserviceinterfaces/.../data/PlexSubtitle.java** (new): External sidecar subtitle contract (Phase 4.2).
+- **plexserviceinterfaces/.../data/PlexStreamInfo.java**: `getSubtitles()` (Phase 4.2).
+- **plexapi/.../network/dto/PlexStream.java** (new): PMS `Stream` under Part (Phase 4.2).
+- **plexapi/.../network/dto/PlexPart.java**: Parse `Stream` children (Phase 4.2).
+- **plexapi/.../media/PlexSubtitleImpl.java** (new): Immutable subtitle track (Phase 4.2).
+- **plexapi/.../adapter/PlexMediaSubtitle.java** (new): Maps to MSC `MediaSubtitle` (srt/ass/vtt/ttml; skips PGS) (Phase 4.2).
+- **plexapi/.../media/PlexStreamInfoImpl.java**: Carry subtitle list (Phase 4.2).
+- **plexapi/.../service/PlexMediaServiceImpl.java**: Collect external `streamType=3` + `key` from metadata (Phase 4.2).
+- **plexapi/.../adapter/PlexMediaItemFormatInfo.java**: `getSubtitles()` from stream (Phase 4.2).
+- **plexapi/openapi-plex-pms-in-use.yaml**: `Stream` schema under Part (Phase 4.2).
+- **plexapi/src/test/...**: Subtitle collect/map unit tests (Phase 4.2).
 
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_

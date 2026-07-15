@@ -96,4 +96,29 @@ public class PlexMediaItemFormatInfoTest {
         assertNull(PlexMediaItemFormatInfo.from(
                 new PlexMediaItemImpl("", "/k", "t", "movie", 0, null, 0), stream));
     }
+
+    @Test
+    public void from_mapsExternalSubtitles() {
+        PlexStreamInfo stream = new PlexStreamInfoImpl(
+                "https://plex:32400/library/parts/1/file.mkv?X-Plex-Token=t",
+                "video/x-matroska",
+                false,
+                0L,
+                java.util.Collections.singletonList(
+                        new com.liskovsoft.plexapi.media.PlexSubtitleImpl(
+                                "https://plex:32400/library/streams/9?X-Plex-Token=t",
+                                "en",
+                                "English",
+                                "srt")));
+
+        MediaItemFormatInfo info = PlexMediaItemFormatInfo.from(sampleItem(), stream);
+
+        assertNotNull(info);
+        assertNotNull(info.getSubtitles());
+        assertEquals(1, info.getSubtitles().size());
+        assertEquals("application/x-subrip", info.getSubtitles().get(0).getMimeType());
+        assertEquals(
+                "https://plex:32400/library/streams/9?X-Plex-Token=t",
+                info.getSubtitles().get(0).getBaseUrl());
+    }
 }

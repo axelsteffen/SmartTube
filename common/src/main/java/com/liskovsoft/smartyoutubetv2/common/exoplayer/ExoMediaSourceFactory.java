@@ -5,13 +5,17 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.ext.cronet.CronetDataSourceFactory;
 import com.google.android.exoplayer2.ext.cronet.CronetEngineWrapper;
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.MergingMediaSource;
+import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.source.dash.DashChunkSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
@@ -38,6 +42,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource.BaseFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
+import com.liskovsoft.mediaserviceinterfaces.data.MediaSubtitle;
 import com.liskovsoft.sharedutils.cronet.CronetManager;
 import com.liskovsoft.sharedutils.helpers.FileHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
@@ -51,6 +56,7 @@ import com.liskovsoft.googlecommon.common.helpers.DefaultHeaders;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -103,6 +109,74 @@ public class ExoMediaSourceFactory {
 
         //return mediaSources.length == 1 ? mediaSources[0] : new ConcatenatingMediaSource(mediaSources); // or playlist
         return mediaSources[0]; // item with max resolution
+    }
+
+    /**
+     * Sideloads external text subtitles (e.g. Plex sidecar SRT/ASS/VTT) via
+     * {@link MergingMediaSource}. No-op when {@code formatInfo} has no subtitles.
+     * <p>
+     * Fork: Phase 4.2 — used for Direct Play / HLS paths that do not go through MPD.
+     */
+    public MediaSource mergeExternalSubtitles(
+            MediaSource videoSource, @Nullable MediaItemFormatInfo formatInfo) {
+        if (videoSource == null || formatInfo == null) {
+            return videoSource;
+        }
+        List<MediaSubtitle> subtitles = formatInfo.getSubtitles();
+        if (subtitles == null || subtitles.isEmpty()) {
+            return videoSource;
+        }
+
+        long durationUs = subtitleDurationUs(formatInfo);
+        SingleSampleMediaSource.Factory factory =
+                new SingleSampleMediaSource.Factory(getMediaDataSourceFactory())
+                        .setTreatLoadErrorsAsEndOfStream(true);
+
+        List<MediaSource> sources = new ArrayList<>(1 + subtitles.size());
+        sources.add(videoSource);
+        int index = 0;
+        for (MediaSubtitle subtitle : subtitles) {
+            if (subtitle == null) {
+                continue;
+            }
+            String url = subtitle.getBaseUrl();
+            String mimeType = subtitle.getMimeType();
+            if (url == null || url.isEmpty() || mimeType == null || mimeType.isEmpty()) {
+                continue;
+            }
+            String language = subtitle.getLanguageCode();
+            if (language == null || language.isEmpty()) {
+                language = subtitle.getName();
+            }
+            Format format = Format.createTextSampleFormat(
+                    "ext-sub-" + index++,
+                    mimeType,
+                    0,
+                    language);
+            sources.add(factory.createMediaSource(Uri.parse(url), format, durationUs));
+        }
+
+        if (sources.size() == 1) {
+            return videoSource;
+        }
+        Log.d(TAG, "Merging " + (sources.size() - 1) + " external subtitle track(s)");
+        return new MergingMediaSource(sources.toArray(new MediaSource[0]));
+    }
+
+    private static long subtitleDurationUs(MediaItemFormatInfo formatInfo) {
+        String lengthSeconds = formatInfo.getLengthSeconds();
+        if (lengthSeconds != null && !lengthSeconds.isEmpty()) {
+            try {
+                long seconds = Long.parseLong(lengthSeconds);
+                if (seconds > 0L) {
+                    return seconds * 1_000_000L;
+                }
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+        // Fallback when duration unknown — keeps SampleSource open for long VOD
+        return 12L * 3600L * 1_000_000L;
     }
 
     /**

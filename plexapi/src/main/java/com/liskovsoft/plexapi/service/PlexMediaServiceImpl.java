@@ -1,6 +1,8 @@
 package com.liskovsoft.plexapi.service;
 
+import com.liskovsoft.plexapi.adapter.PlexMediaSubtitle;
 import com.liskovsoft.plexapi.media.PlexStreamInfoImpl;
+import com.liskovsoft.plexapi.media.PlexSubtitleImpl;
 import com.liskovsoft.plexapi.network.PlexPmsApi;
 import com.liskovsoft.plexapi.network.PlexRetrofitHelper;
 import com.liskovsoft.plexapi.network.PlexUrlHelper;
@@ -9,22 +11,28 @@ import com.liskovsoft.plexapi.network.dto.MediaContainerResponse;
 import com.liskovsoft.plexapi.network.dto.PlexMedia;
 import com.liskovsoft.plexapi.network.dto.PlexMetadata;
 import com.liskovsoft.plexapi.network.dto.PlexPart;
+import com.liskovsoft.plexapi.network.dto.PlexStream;
 import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.plexserviceinterfaces.PlexMediaService;
 import com.liskovsoft.plexserviceinterfaces.data.PlexMediaItem;
 import com.liskovsoft.plexserviceinterfaces.data.PlexServer;
 import com.liskovsoft.plexserviceinterfaces.data.PlexStreamInfo;
+import com.liskovsoft.plexserviceinterfaces.data.PlexSubtitle;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import io.reactivex.Observable;
 import retrofit2.Response;
 
 /**
- * Resolves playable stream URLs and reports playback progress (Phase 1.6 / 4.1).
- * Prefers Direct Play from metadata {@code Part.key}; falls back to HLS decision.
+ * Resolves playable stream URLs, external subtitles, and reports playback progress
+ * (Phase 1.6 / 4.1 / 4.2). Prefers Direct Play from metadata {@code Part.key};
+ * falls back to HLS decision.
  */
 public class PlexMediaServiceImpl implements PlexMediaService {
     private static final String TAG = PlexMediaServiceImpl.class.getSimpleName();
@@ -78,6 +86,7 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         MediaContainer metaContainer = requireContainer(metaResponse, "fetch metadata " + item.getRatingKey());
 
         long viewOffsetMs = firstViewOffset(metaContainer);
+        List<PlexSubtitle> subtitles = collectExternalSubtitles(metaContainer, baseUrl, token);
 
         PlexPart directPart = firstPartWithKey(metaContainer);
         if (directPart != null) {
@@ -86,12 +95,14 @@ public class PlexMediaServiceImpl implements PlexMediaService {
             if (container == null || container.isEmpty()) {
                 container = firstMediaContainer(metaContainer);
             }
-            Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey());
-            return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs);
+            Log.d(TAG, "Direct Play for ratingKey=" + item.getRatingKey()
+                    + " subtitles=" + subtitles.size());
+            return new PlexStreamInfoImpl(
+                    url, PlexStreamInfoImpl.mimeHint(container), false, viewOffsetMs, subtitles);
         }
 
         Log.d(TAG, "No Part.key — trying decision for ratingKey=" + item.getRatingKey());
-        return resolveViaDecision(api, item.getRatingKey(), baseUrl, token, viewOffsetMs);
+        return resolveViaDecision(api, item.getRatingKey(), baseUrl, token, viewOffsetMs, subtitles);
     }
 
     private void reportTimeline(PlexMediaItem item, long positionMs, long durationMs, String state)
@@ -133,9 +144,13 @@ public class PlexMediaServiceImpl implements PlexMediaService {
                 + " time=" + time + " duration=" + duration);
     }
 
-    private PlexStreamInfo resolveViaDecision(PlexPmsApi api, String ratingKey,
-                                              String baseUrl, String token,
-                                              long viewOffsetMs) throws IOException {
+    private PlexStreamInfo resolveViaDecision(
+            PlexPmsApi api,
+            String ratingKey,
+            String baseUrl,
+            String token,
+            long viewOffsetMs,
+            List<PlexSubtitle> subtitles) throws IOException {
         String path = "/library/metadata/" + ratingKey;
         Response<MediaContainerResponse> decisionResponse = api.getPlaybackDecision(
                 path, 1, 1, "hls", 0, 0, token).execute();
@@ -158,8 +173,68 @@ public class PlexMediaServiceImpl implements PlexMediaService {
         }
 
         Log.d(TAG, "Decision stream for ratingKey=" + ratingKey
-                + " transcoded=" + transcoded + " decision=" + part.getDecision());
-        return new PlexStreamInfoImpl(url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded, viewOffsetMs);
+                + " transcoded=" + transcoded + " decision=" + part.getDecision()
+                + " subtitles=" + subtitles.size());
+        return new PlexStreamInfoImpl(
+                url, PlexStreamInfoImpl.mimeHint(hintSource), transcoded, viewOffsetMs, subtitles);
+    }
+
+    /**
+     * Collects external subtitle streams ({@code streamType=3} with a {@code key}).
+     * Embedded tracks without a key are left to the container extractor.
+     */
+    static List<PlexSubtitle> collectExternalSubtitles(
+            MediaContainer container, String baseUrl, String token) {
+        if (container == null) {
+            return Collections.emptyList();
+        }
+        List<PlexSubtitle> result = new ArrayList<>();
+        for (PlexMetadata metadata : container.getMetadata()) {
+            for (PlexMedia media : metadata.getMedia()) {
+                for (PlexPart part : media.getParts()) {
+                    for (PlexStream stream : part.getStreams()) {
+                        if (stream.getStreamType() != PlexStream.TYPE_SUBTITLE) {
+                            continue;
+                        }
+                        String key = stream.getKey();
+                        if (key == null || key.isEmpty()) {
+                            continue;
+                        }
+                        if (PlexMediaSubtitle.mimeFromCodec(stream.getCodec()) == null) {
+                            continue;
+                        }
+                        String url = PlexUrlHelper.absoluteUrl(baseUrl, key, token);
+                        if (url == null || url.isEmpty()) {
+                            continue;
+                        }
+                        String languageCode = firstNonEmpty(
+                                stream.getLanguageCode(),
+                                stream.getLanguageTag(),
+                                stream.getLanguage());
+                        String name = firstNonEmpty(
+                                stream.getDisplayTitle(),
+                                stream.getTitle(),
+                                languageCode,
+                                stream.getCodec());
+                        result.add(new PlexSubtitleImpl(
+                                url, languageCode, name, stream.getCodec()));
+                    }
+                }
+            }
+        }
+        return result.isEmpty() ? Collections.emptyList() : result;
+    }
+
+    private static String firstNonEmpty(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static long firstViewOffset(MediaContainer container) {
