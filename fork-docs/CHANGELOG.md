@@ -28,6 +28,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
 
+### plexserviceinterfaces
+- **plexserviceinterfaces/** (new): Fork-only Plex API contracts — `PlexServiceManager`, sign-in/server/library/media services, and data interfaces (`PlexServer`, `PlexLibrary`, `PlexMediaItem`, `PlexStreamInfo`, `PlexAuthPin`).
+
+### plexapi
+- **plexapi/** (new): Fork-only Plex API implementation module (Retrofit deps). Stub services throw until Phase 1.3–1.6; entry point `com.liskovsoft.plexapi.PlexServiceManager`.
+
 ### leanbackassistant
 - _(unchanged — `common` already depends on `leanbackassistant`; circular dep prevents using `MediaSourceRegistry` here)_
 
