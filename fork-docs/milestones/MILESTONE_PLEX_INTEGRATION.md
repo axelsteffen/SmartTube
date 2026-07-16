@@ -19,7 +19,7 @@ Play Plex media (primarily own library on Plex Media Server) inside SmartTube wi
 
 1. **Plex code lives in SmartTube fork only** — not in MediaServiceCore
 2. **Do not extend `mediaserviceinterfaces` for Plex** — fork-only interfaces + adapters
-3. **Minimal hooks in upstream files** — registry, sidebar extension, source routing
+3. **Minimal hooks in upstream files** — registry, sidebar extension, source routing (enforced by [`.cursor/rules/fork-upstream-minimal.mdc`](../../.cursor/rules/fork-upstream-minimal.mdc); mark hooks with `// FORK:` … `// END FORK`)
 4. **Reuse existing UI/Player** where possible
 5. **TV resource constraints** — no bulk caching, lazy loading, on-demand API calls
 

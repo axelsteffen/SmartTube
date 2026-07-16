@@ -44,6 +44,10 @@ Always merge **submodules before the parent repo**:
 
 Use the **upstream-merge** Cursor skill for AI-assisted conflict resolution.
 
+## Minimizing future conflicts
+
+When adding fork features, follow [`.cursor/rules/fork-upstream-minimal.mdc`](../../.cursor/rules/fork-upstream-minimal.mdc): isolate logic in fork-only files, keep thin hooks in upstream files, mark them with `// FORK:` … `// END FORK`, and keep [Fork Touch Points](../CHANGELOG.md#fork-touch-points) current.
+
 ## Known Conflict Hotspots
 
 Full file list: [../CHANGELOG.md § Fork Touch Points](../CHANGELOG.md#fork-touch-points) and [conflict reference](../../.cursor/skills/upstream-merge/reference.md).

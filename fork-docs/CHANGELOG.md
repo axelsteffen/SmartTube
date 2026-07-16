@@ -93,6 +93,7 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 - **.gitmodules**: Added `PlexServiceCore` → `https://github.com/axelsteffen/PlexServiceCore.git`.
 
 ### fork-docs
+- **.cursor/rules/fork-upstream-minimal.mdc** (new): Always-apply rule — prefer fork-only code, thin upstream hooks, `// FORK:` … `// END FORK` markers, keep Fork Touch Points + changelog in sync. Linked from `fork-docs/README.md`, `architecture/UPSTREAM_MERGE.md`, upstream-merge `reference.md`.
 - **fork-docs/CHANGELOG.md** / **milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 5.3 done — leanbackassistant routed via `ServiceManagerProvider`.
 - **fork-docs/CHANGELOG.md**: Phase 5.2 — Upstream merge test 2026-07-15: `merge-upstream.sh --fetch-only` → SharedModules / MediaServiceCore / SmartTube all **0 behind** upstream (no merge needed after Phase 4 polish + 5.1 docs). Smoke: `:common:compileStbetaDebugJavaWithJavac` OK. (`:plexapi:testStbetaDebugUnitTest` still hits pre-existing `RoboCookieManager` classpath failures — not an upstream-merge regression.)
 - **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.2 marked done.

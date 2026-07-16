@@ -11,6 +11,7 @@ Design and architecture documentation for this fork.
 
 ## Related
 
+- Minimal upstream surface (agent rule): [../../.cursor/rules/fork-upstream-minimal.mdc](../../.cursor/rules/fork-upstream-minimal.mdc)
 - Fork touch points (merge hotspots): [../CHANGELOG.md § Fork Touch Points](../CHANGELOG.md#fork-touch-points)
 - Plex milestone: [MILESTONE_PLEX_INTEGRATION.md](../milestones/MILESTONE_PLEX_INTEGRATION.md)
 - Merge conflict reference: [../../.cursor/skills/upstream-merge/reference.md](../../.cursor/skills/upstream-merge/reference.md)

@@ -27,6 +27,7 @@ Summaries appear in [CHANGELOG.md](CHANGELOG.md) under the matching section.
 - **Changelog:** Add entries under `[Unreleased]` in the relevant subproject section (`common`, `smarttubetv`, `MediaServiceCore` summary).
 - **Milestones:** One file per feature: `milestones/MILESTONE_<SHORT_DESCRIPTION>.md`
 - **Language:** Technical documentation is written in **English**.
+- **Minimal upstream surface:** Prefer fork-only code; keep thin hooks in upstream files; mark with `// FORK:` … `// END FORK`. Rule: [`.cursor/rules/fork-upstream-minimal.mdc`](../.cursor/rules/fork-upstream-minimal.mdc).
 - **Upstream merges:** Use the [upstream-merge skill](../.cursor/skills/upstream-merge/SKILL.md) and [merge-upstream.sh](scripts/merge-upstream.sh). See [architecture/UPSTREAM_MERGE.md](architecture/UPSTREAM_MERGE.md).
 
 ## Short Commands
