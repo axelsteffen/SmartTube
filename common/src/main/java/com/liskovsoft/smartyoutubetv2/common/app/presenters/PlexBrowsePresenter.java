@@ -16,7 +16,7 @@ import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.misc.PlexPlaybackHelper;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -40,10 +40,68 @@ public final class PlexBrowsePresenter {
 
     /**
      * Cold observable: lists movie + show sections, then fetches the first page of each
-     * sequentially (TV-friendly). Emits on main after IO via {@link RxHelper}.
+     * sequentially (TV-friendly). Emits <strong>one row at a time</strong> so the browse
+     * UI can hide the spinner as soon as the first library arrives (instead of waiting
+     * for every section — a slow/hanging later library used to leave the spinner forever).
      */
     public static Observable<List<MediaGroup>> getLibraryRowsObserve() {
-        return RxHelper.fromCallable(PlexBrowsePresenter::fetchLibraryRows);
+        return RxHelper.createLong(emitter -> {
+            try {
+                PlexLibraryService libraryService = PlexServiceManager.instance().getLibraryService();
+                List<PlexLibrary> libraries = libraryService.getLibrariesObserve().blockingFirst();
+
+                if (libraries == null || libraries.isEmpty()) {
+                    Log.d(TAG, "No Plex libraries");
+                    emitter.onNext(Collections.emptyList());
+                    emitter.onComplete();
+                    return;
+                }
+
+                int emitted = 0;
+                for (PlexLibrary library : libraries) {
+                    if (emitter.isDisposed()) {
+                        return;
+                    }
+                    if (!isMovieLibrary(library) && !isShowLibrary(library)) {
+                        continue;
+                    }
+
+                    try {
+                        Log.d(TAG, "Loading library row: " + library.getTitle()
+                                + " type=" + library.getType() + " key=" + library.getKey());
+                        PlexPage page = fetchLibraryPage(libraryService, library, 0);
+                        if (page == null || page.getItems().isEmpty()) {
+                            Log.d(TAG, "Skipping empty library: " + library.getTitle());
+                            continue;
+                        }
+
+                        MediaGroup group = PlexMediaGroupAdapter.from(library, page.getItems(), page);
+                        if (group != null && !group.isEmpty()) {
+                            emitter.onNext(Collections.singletonList(group));
+                            emitted++;
+                            Log.d(TAG, "Emitted library row: " + library.getTitle()
+                                    + " items=" + group.getMediaItems().size());
+                        }
+                    } catch (Throwable e) {
+                        // One bad/slow section must not block the whole Plex browse.
+                        Log.e(TAG, "Failed library row " + library.getTitle() + ": "
+                                + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+                    }
+                }
+
+                if (emitted == 0 && !emitter.isDisposed()) {
+                    emitter.onNext(Collections.emptyList());
+                }
+                if (!emitter.isDisposed()) {
+                    Log.d(TAG, "Finished Plex library rows, emitted=" + emitted);
+                    emitter.onComplete();
+                }
+            } catch (Throwable e) {
+                if (!emitter.isDisposed()) {
+                    emitter.onError(e);
+                }
+            }
+        });
     }
 
     /**
@@ -77,33 +135,6 @@ public final class PlexBrowsePresenter {
             return null;
         }
         return RxHelper.fromCallable(() -> fetchContinueGroup((PlexMediaGroupAdapter) group));
-    }
-
-    private static List<MediaGroup> fetchLibraryRows() {
-        PlexLibraryService libraryService = PlexServiceManager.instance().getLibraryService();
-
-        List<PlexLibrary> libraries = libraryService.getLibrariesObserve().blockingFirst();
-        List<MediaGroup> rows = new ArrayList<>();
-
-        if (libraries == null || libraries.isEmpty()) {
-            Log.d(TAG, "No Plex libraries");
-            return rows;
-        }
-
-        for (PlexLibrary library : libraries) {
-            PlexPage page = fetchLibraryPage(libraryService, library, 0);
-            if (page == null || page.getItems().isEmpty()) {
-                continue;
-            }
-
-            MediaGroup group = PlexMediaGroupAdapter.from(library, page.getItems(), page);
-            if (group != null && !group.isEmpty()) {
-                rows.add(group);
-            }
-        }
-
-        Log.d(TAG, "Built " + rows.size() + " Plex library row(s)");
-        return rows;
     }
 
     @Nullable

@@ -749,6 +749,11 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
         Disposable updateAction = groups
                 .subscribe(
                         mediaGroups -> {
+                            if (getView() == null) {
+                                Log.e(TAG, "updateRowsHeader: view null while receiving groups");
+                                return;
+                            }
+
                             getView().showProgressBar(false);
 
                             filterHomeIfNeeded(mediaGroups);
@@ -760,6 +765,12 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
                                 }
 
                                 VideoGroup videoGroup = VideoGroup.from(mediaGroup, section);
+
+                                if (videoGroup.isEmpty()) {
+                                    Log.e(TAG, "loadRowsHeader: VideoGroup empty after adapt. Group Name: "
+                                            + mediaGroup.getTitle());
+                                    continue;
+                                }
 
                                 if (TextUtils.isEmpty(videoGroup.getTitle())) {
                                     videoGroup.setTitle(getContext().getString(R.string.suggestions));
@@ -774,7 +785,12 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
                         error -> {
                             Log.e(TAG, "updateRowsHeader error: %s", error.getMessage());
                             handleLoadError(error);
-                        }, () -> handleLoadError(null));
+                        }, () -> {
+                            if (getView() != null) {
+                                getView().showProgressBar(false);
+                            }
+                            handleLoadError(null);
+                        });
 
         mActions.add(updateAction);
     }

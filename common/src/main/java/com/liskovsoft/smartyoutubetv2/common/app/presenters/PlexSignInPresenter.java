@@ -19,6 +19,7 @@ import io.reactivex.disposables.Disposable;
 public class PlexSignInPresenter extends SignInPresenter {
     private static final String TAG = PlexSignInPresenter.class.getSimpleName();
     private static final String SIGN_IN_URL = "https://plex.tv/link";
+    private static final String QR_SIGN_IN_URL_PREFIX = "https://plex.tv/api/v2/pins/qr/";
 
     @SuppressLint("StaticFieldLeak")
     private static PlexSignInPresenter sInstance;
@@ -68,16 +69,18 @@ public class PlexSignInPresenter extends SignInPresenter {
     }
 
     private void startPinFlow() {
+        if (getContext() != null) {
+            PlexServiceManager.init(getContext());
+        }
         PlexSignInService signInService = PlexServiceManager.instance().getSignInService();
         mSignInAction = signInService.signInWithPinObserve()
                 .subscribe(
                         this::showPin,
                         error -> {
-                            Log.e(TAG, "Plex sign-in error: %s", error.getMessage());
+                            String detail = formatSignInError(error);
+                            Log.e(TAG, "Plex sign-in error: %s", detail);
                             if (getView() != null) {
-                                getView().showCode(
-                                        error.getMessage() != null ? error.getMessage() : "Error",
-                                        SIGN_IN_URL);
+                                getView().showCode(detail, SIGN_IN_URL);
                             }
                         },
                         () -> {
@@ -97,7 +100,23 @@ public class PlexSignInPresenter extends SignInPresenter {
             return;
         }
         String authUrl = pin.getAuthUrl() != null ? pin.getAuthUrl() : SIGN_IN_URL;
-        // fullSignInUrl drives the QR code; plex.tv/link does not embed the pin code.
-        getView().showCode(pin.getCode(), authUrl, authUrl);
+        // Description: plex.tv/link; QR embeds the pin via plex.tv QR endpoint.
+        getView().showCode(pin.getCode(), authUrl, QR_SIGN_IN_URL_PREFIX + pin.getCode());
+    }
+
+    /** Prefer message; fall back to class name (e.g. NetworkOnMainThreadException has null message). */
+    private static String formatSignInError(Throwable error) {
+        if (error == null) {
+            return "Unknown error";
+        }
+        String message = error.getMessage();
+        if (message != null && !message.isEmpty()) {
+            return message;
+        }
+        Throwable cause = error.getCause();
+        if (cause != null && cause.getMessage() != null && !cause.getMessage().isEmpty()) {
+            return cause.getClass().getSimpleName() + ": " + cause.getMessage();
+        }
+        return error.getClass().getSimpleName();
     }
 }

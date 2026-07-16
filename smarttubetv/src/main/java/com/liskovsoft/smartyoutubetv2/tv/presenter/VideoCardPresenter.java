@@ -150,9 +150,23 @@ public class VideoCardPresenter extends LongClickPresenter {
             return;
         }
 
+        String thumbUrl = ClickbaitRemover.updateThumbnail(video, mThumbQuality);
+        if (thumbUrl == null || thumbUrl.isEmpty()) {
+            thumbUrl = video.cardImageUrl;
+        }
+        // Avoid Glide "Received null model" (common for Plex items without thumb).
+        if (thumbUrl == null || thumbUrl.isEmpty()) {
+            Glide.with(context)
+                    .load(R.drawable.card_placeholder)
+                    .apply(ViewUtil.glideOptions())
+                    .override(mWidth, mHeight)
+                    .into(cardView.getMainImageView());
+            return;
+        }
+
         Glide.with(context)
                 //.asBitmap() // disable animation (webp, gif)
-                .load(ClickbaitRemover.updateThumbnail(video, mThumbQuality))
+                .load(thumbUrl)
                 //.placeholder(mDefaultCardImage)
                 .apply(ViewUtil.glideOptions())
                 // improve image compression on low end devices
@@ -164,7 +178,7 @@ public class VideoCardPresenter extends LongClickPresenter {
                 .error(
                     // Updated thumbnail url not found
                     Glide.with(context)
-                        .load(video.cardImageUrl) // always working
+                        .load(video.cardImageUrl != null ? video.cardImageUrl : R.drawable.card_placeholder)
                         //.placeholder(mDefaultCardImage)
                         .apply(ViewUtil.glideOptions())
                         .listener(mErrorListener)

@@ -607,15 +607,25 @@ public final class Video {
             return false;
         }
 
-        // NOTE: Movies labeled as "Free with Ads" not supported yet
-        return Helpers.allNulls(videoId, playlistId, reloadPageKey, playlistParams, channelId, searchQuery) || isMovie || isMembersOnly();
+        // NOTE: YouTube movies labeled as "Free with Ads" not supported yet.
+        // Plex type=movie must NOT use isMovie (see PlexMediaItemAdapter.isMovie).
+        return Helpers.allNulls(videoId, playlistId, reloadPageKey, playlistParams, channelId, searchQuery)
+                || (isMovie && !isPlex())
+                || isMembersOnly();
     }
 
     /**
-     * Members only videos appears as videos with a length badge but has only a channel id
+     * YouTube members-only: length badge but no playable video id (channel-only teaser).
+     * Must not treat playlist/show containers (Plex shows/seasons, YT playlists) as empty —
+     * those have {@code videoId == null} and may still carry {@code durationMs}.
      */
     private boolean isMembersOnly() {
-        return videoId == null && durationMs > 0;
+        return videoId == null
+                && durationMs > 0
+                && playlistId == null
+                && reloadPageKey == null
+                && playlistParams == null
+                && searchQuery == null;
     }
 
     public String getGroupTitle() {

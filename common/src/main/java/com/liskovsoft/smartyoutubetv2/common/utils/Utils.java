@@ -107,6 +107,7 @@ public class Utils {
             "com.teamsmart.videomanager.tv",
             "org.smarttube.beta",
             "org.smarttube.stable",
+            "org.smarttube.plex",
             "app.smarttube.fdroid",
     };
     public static final String[] BACKUP_PREFS = {

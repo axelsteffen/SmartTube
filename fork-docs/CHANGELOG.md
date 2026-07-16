@@ -38,6 +38,7 @@ Stable merge checklist of files that differ from [upstream](https://github.com/y
 | `smarttubetv/.../PlaybackFragment.java` | Implements subtitle/audio open APIs | Keep overrides |
 | `smarttubetv/.../EmbedPlayerView.java` | Same as PlaybackFragment | Keep overrides |
 | `smarttubetv/.../StoryboardManager.java` | `MediaSourceRegistry.getServiceManager()` | Keep registry call |
+| `smarttubetv/.../VideoCardPresenter.java` | Null-safe Glide load (placeholder if no thumb) | Keep null guard |
 | `common/.../ChannelGroupServiceWrapper.java` | Registry / service access | Keep registry; accept upstream fixes around it |
 | ~20 presenters/controllers/misc | `YouTubeServiceManager.instance()` → `MediaSourceRegistry.getServiceManager()` | Re-apply if upstream reintroduces direct calls |
 
@@ -74,6 +75,19 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 
 ## [Unreleased]
 
+- **PlexMediaItemAdapter.isMovie** / **Video.isEmpty**: Plex movies were dropped as empty (YouTube `isMovie` = "Free with Ads"). Adapter always returns false; `Video.isEmpty` ignores `isMovie` for Plex. Fixes endless browse spinner with empty Movie rows.
+- **Video.isMembersOnly** / **PlexMediaItemAdapter.getDurationMs**: Plex TV shows (playlist containers, `videoId` null) were dropped when PMS sent `duration`. `isMembersOnly` now requires no playlist/reload keys; containers report duration 0.
+- **BrowsePresenter.updateVideoRows**: Hide progress on complete; skip empty `VideoGroup` after adapt; null-safe view checks.
+- **PlexBrowsePresenter**: Emit each library row as it loads (spinner clears after first section; one slow library no longer blocks the UI).
+- **PlexMediaItemImpl** / **VideoCardPresenter**: Null thumb fix — Plex fallback paths + Glide placeholder when URL missing (`Received null model`).
+- **PlexServerImpl.pickBaseUrl**: Remote access — if `local=false` exists, ignore private `local=true` (Docker/`172.18.0.3`/`*.plex.direct`). Re-select server after update.
+- **PlexSignInServiceImpl** / **PlexSignInPresenter**: Fixed Plex PIN sign-in — ran on main thread (`NetworkOnMainThreadException` → log `Plex sign-in error: null`); now `RxHelper.createLong`, short PIN (`strong=false`), QR via `plex.tv/api/v2/pins/qr/{code}`, clearer error text.
+- **SplashPresenter**: `PlexServiceManager.init(context)` after global prefs.
+- **smarttubetv/build.gradle** (`stbeta`): `applicationId` → `org.smarttube.plex` so the fork can coexist with upstream SmartTube beta on the same TV.
+- **smarttubetv/google-services.json**: Client entry for `org.smarttube.plex` (Gradle Google Services plugin).
+- **smarttubetv/src/stbeta/.../strings.xml**: Launcher name → `SmartTube Plex`.
+- **leanbackassistant/src/stbeta/**: `search_authority` / searchable provider URIs updated to `org.smarttube.plex`.
+- **common/.../Utils.java**: Added `org.smarttube.plex` to `KNOWN_PACKAGES`.
 - **Phase 5.4**: Extracted `plexserviceinterfaces` + `plexapi` into git submodule `PlexServiceCore` (`axelsteffen/PlexServiceCore`). `settings.gradle` applies `PlexServiceCore/core_settings.gradle` (same pattern as MediaServiceCore). In-tree `plexapi/` / `plexserviceinterfaces/` removed.
 - **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.4 marked done; module layout updated.
 - **.gitmodules**: Added `PlexServiceCore` → `https://github.com/axelsteffen/PlexServiceCore.git`.
@@ -147,6 +161,8 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 - **common/src/main/res/values/strings.xml**: `plex_error_server_offline`, `plex_error_auth_expired`, `plex_error_playback_failed`, `plex_error_load_failed` (Phase 4.6).
 
 ### smarttubetv
+- **smarttubetv/build.gradle** + **src/stbeta/**: Fork install ID `org.smarttube.plex` / display name `SmartTube Plex` (coexist with upstream beta).
+- **smarttubetv/.../VideoCardPresenter.java**: Skip Glide null model — load placeholder when thumb URL missing.
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
 
 ### PlexServiceCore (submodule)
