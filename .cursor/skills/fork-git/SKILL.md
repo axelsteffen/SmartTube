@@ -4,7 +4,8 @@ description: >-
   Git commit and push for this SmartTube fork using Conventional Commits.
   Trigger commands: git commit, commit, commit changes, git push, push,
   push changes, commit push, commit and push, ship. Handles submodule
-  commits (MediaServiceCore) before parent repo. Routed via fork-commands rule.
+  commits (MediaServiceCore, PlexServiceCore) before parent repo. Routed via
+  fork-commands rule.
 ---
 
 # Fork Git — Commit & Push
@@ -39,9 +40,10 @@ Conventional Commits for this fork. Invoked via `commit`, `push`, `commit push` 
 |-------|------|
 | `fork-docs` | fork-docs/, skills, cursor rules |
 | `msc` | MediaServiceCore submodule |
+| `psc` | PlexServiceCore submodule |
 | `common` | common module |
 | `smarttubetv` | smarttubetv module |
-| `plex` | Plex integration (future) |
+| `plex` | Plex integration (SmartTube hooks) |
 | `merge` | Upstream merge result |
 
 - Scope is optional but preferred when clear.
@@ -76,16 +78,17 @@ git log -5 --oneline
 Also check submodules:
 
 ```bash
-git status MediaServiceCore SharedModules
+git status MediaServiceCore SharedModules PlexServiceCore
 cd MediaServiceCore && git status -sb && git diff --stat
+cd ../PlexServiceCore && git status -sb && git diff --stat
 ```
 
 ### Submodule order
 
-If **MediaServiceCore** has changes:
+If **MediaServiceCore** or **PlexServiceCore** has changes:
 
-1. Commit inside `MediaServiceCore/` first (separate repo, `origin` → axelsteffen/MediaServiceCore).
-2. Then commit SmartTube root (includes updated submodule pointer).
+1. Commit inside the submodule first (`MediaServiceCore` → axelsteffen/MediaServiceCore; `PlexServiceCore` → axelsteffen/PlexServiceCore).
+2. Then commit SmartTube root (includes updated submodule pointer(s)).
 
 If only SmartTube root changed, commit root only.
 
@@ -129,18 +132,20 @@ git status -sb
 git log origin/main..HEAD --oneline 2>/dev/null || git log origin/master..HEAD --oneline
 ```
 
-Check submodule was pushed if MSC was committed:
+Check submodules were pushed if committed:
 
 ```bash
 cd MediaServiceCore && git status -sb
+cd ../PlexServiceCore && git status -sb
 ```
 
 ### Push order
 
-1. Push **MediaServiceCore** first if it has unpushed commits:
+1. Push **MediaServiceCore** and/or **PlexServiceCore** first if they have unpushed commits:
 
 ```bash
 cd MediaServiceCore && git push -u origin HEAD
+cd ../PlexServiceCore && git push -u origin HEAD
 ```
 
 2. Push **SmartTube** root:

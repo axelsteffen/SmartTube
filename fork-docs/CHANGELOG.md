@@ -14,7 +14,7 @@ Stable merge checklist of files that differ from [upstream](https://github.com/y
 
 | File / area | Fork change | Merge hint |
 |-------------|-------------|------------|
-| `settings.gradle` | Includes `:plexserviceinterfaces`, `:plexapi` | Keep module includes |
+| `settings.gradle` | Applies `PlexServiceCore/core_settings.gradle` (incl. `:plexserviceinterfaces`, `:plexapi`) | Keep PlexServiceCore apply |
 | `common/build.gradle` | Depends on `plexserviceinterfaces` + `plexapi` | Keep deps |
 | `common/.../data/Video.java` | `mediaSource`, `isPlex()` / `isYouTube()`, serialize | Keep field + helpers around upstream edits |
 | `common/.../presenters/BrowsePresenter.java` | Sidebar registry, `TYPE_PLEX`, pagination, Plex errors | Keep Plex branches |
@@ -45,8 +45,7 @@ Stable merge checklist of files that differ from [upstream](https://github.com/y
 
 | Path | Role |
 |------|------|
-| `plexserviceinterfaces/` | Plex API contracts |
-| `plexapi/` | Plex API impl, adapters, OpenAPI, tests |
+| `PlexServiceCore/` (submodule) | Fork-only Plex API (`plexserviceinterfaces` + `plexapi`) — see [PlexServiceCore/CHANGELOG.md](../PlexServiceCore/CHANGELOG.md) |
 | `common/.../misc/MediaSourceRegistry.java` | Source registry (`YOUTUBE` / `PLEX`) |
 | `common/.../misc/SidebarSectionRegistry.java` | Sidebar sections id ≥ 100 |
 | `common/.../misc/PlexPlaybackHelper.java` | Format resolve, timeline, audio, errors |
@@ -74,6 +73,10 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 ---
 
 ## [Unreleased]
+
+- **Phase 5.4**: Extracted `plexserviceinterfaces` + `plexapi` into git submodule `PlexServiceCore` (`axelsteffen/PlexServiceCore`). `settings.gradle` applies `PlexServiceCore/core_settings.gradle` (same pattern as MediaServiceCore). In-tree `plexapi/` / `plexserviceinterfaces/` removed.
+- **fork-docs/milestones/MILESTONE_PLEX_INTEGRATION.md**: 5.4 marked done; module layout updated.
+- **.gitmodules**: Added `PlexServiceCore` → `https://github.com/axelsteffen/PlexServiceCore.git`.
 
 ### fork-docs
 - **fork-docs/CHANGELOG.md** / **milestones/MILESTONE_PLEX_INTEGRATION.md**: Phase 5.3 done — leanbackassistant routed via `ServiceManagerProvider`.
@@ -145,6 +148,10 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 
 ### smarttubetv
 - **smarttubetv/.../StoryboardManager.java**: Uses `MediaSourceRegistry.getServiceManager()` instead of direct `YouTubeServiceManager`.
+
+### PlexServiceCore (submodule)
+
+As of Phase 5.4, live sources live in [PlexServiceCore/](../PlexServiceCore/) — see [PlexServiceCore/CHANGELOG.md](../PlexServiceCore/CHANGELOG.md). Entries below are historical (pre-extraction paths).
 
 ### plexserviceinterfaces
 - **plexserviceinterfaces/** (new): Fork-only Plex API contracts — `PlexServiceManager`, sign-in/server/library/media services, and data interfaces (`PlexServer`, `PlexLibrary`, `PlexMediaItem`, `PlexStreamInfo`, `PlexAuthPin`).

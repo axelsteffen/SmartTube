@@ -9,6 +9,7 @@ How to merge changes from upstream (yuliskov) into this fork.
 | SmartTube | `.` | `origin` → axelsteffen/SmartTube | `upstream` → yuliskov/SmartTube | `main` | `master` |
 | MediaServiceCore | `MediaServiceCore/` | `origin` → axelsteffen/MediaServiceCore | `upstream` → yuliskov/MediaServiceCore | `master` | `master` |
 | SharedModules | `SharedModules/` | `origin` → yuliskov/SharedModules | _(same, no separate fork)_ | `master` | `master` |
+| PlexServiceCore | `PlexServiceCore/` | `origin` → axelsteffen/PlexServiceCore | _(fork-only — no upstream)_ | `main` | — |
 
 ## Merge Order
 
@@ -51,7 +52,7 @@ Full file list: [../CHANGELOG.md § Fork Touch Points](../CHANGELOG.md#fork-touc
 |------|------|-----------------|
 | `MediaServiceCore/mediaserviceinterfaces/` | High | Keep fork additions (e.g. category field); merge upstream interface changes carefully |
 | `MediaServiceCore/youtubeapi/` | Medium | Prefer upstream bugfixes; preserve fork-only files (OpenAPI yaml) |
-| `settings.gradle`, `common/build.gradle` | Medium | Keep plex module includes / deps |
+| `settings.gradle`, `common/build.gradle` | Medium | Keep `PlexServiceCore` apply / plex module deps |
 | `Video`, playback controllers, `BrowsePresenter`, ExoPlayer hooks | Medium–High | Keep Plex / `MediaSourceRegistry` branches; accept upstream fixes around them |
 | `common/`, `smarttubetv/` registry call sites | Low | Prefer `MediaSourceRegistry.getServiceManager()` |
 | Submodule pointers in SmartTube | Expected | After MSC/SM merge, commit new SHAs in parent repo |

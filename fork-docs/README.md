@@ -13,13 +13,14 @@ Fork-specific documentation for this SmartTube fork. Not part of upstream SmartT
 | [scripts/](scripts/) | Fork maintenance scripts |
 | [PLAN_FORK_DOCS.md](PLAN_FORK_DOCS.md) | Implementation plan for this folder |
 
-## Submodule Changelog
+## Submodule Changelogs
 
-MediaServiceCore is a separate git submodule. Detailed MSC changes are documented in:
+| Submodule | Changelog |
+|-----------|-----------|
+| MediaServiceCore | [MediaServiceCore/CHANGELOG_FORK.md](../MediaServiceCore/CHANGELOG_FORK.md) |
+| PlexServiceCore | [PlexServiceCore/CHANGELOG.md](../PlexServiceCore/CHANGELOG.md) (fork-only, no upstream) |
 
-- [MediaServiceCore/CHANGELOG_FORK.md](../MediaServiceCore/CHANGELOG_FORK.md)
-
-Summaries only appear in [CHANGELOG.md](CHANGELOG.md) under the MediaServiceCore section.
+Summaries appear in [CHANGELOG.md](CHANGELOG.md) under the matching section.
 
 ## Conventions
 

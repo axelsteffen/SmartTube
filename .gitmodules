@@ -4,3 +4,6 @@
 [submodule "MediaServiceCore"]
 	path = MediaServiceCore
 	url = https://github.com/yuliskov/MediaServiceCore
+[submodule "PlexServiceCore"]
+	path = PlexServiceCore
+	url = https://github.com/axelsteffen/PlexServiceCore.git

@@ -4,7 +4,7 @@
 
 | Situation | Resolution |
 |-----------|------------|
-| Fork-only file (e.g. `openapi-youtube-api-in-code.yaml`, `plexapi/`) | Keep fork version entirely |
+| Fork-only file (e.g. `openapi-youtube-api-in-code.yaml`, `PlexServiceCore/`) | Keep fork version entirely |
 | Fork addition in shared file (e.g. `Video.mediaSource`, category field) | Keep fork addition; merge upstream changes around it |
 | Upstream bugfix in `youtubeapi/` | Accept upstream fix; re-apply fork additions if needed |
 | Upstream refactor in `common/` or `smarttubetv/` | Accept upstream; re-apply fork hooks (registry, Plex branches) |
@@ -30,9 +30,9 @@ Canonical copy (with more detail): [fork-docs/CHANGELOG.md § Fork Touch Points]
 
 | File / area | Fork change |
 |-------------|-------------|
-| `settings.gradle` | `include ':plexserviceinterfaces', ':plexapi'` |
+| `settings.gradle` | Applies `PlexServiceCore/core_settings.gradle` |
 | `common/build.gradle` | Depends on plex modules |
-| `plexserviceinterfaces/`, `plexapi/` | Fork-only Plex stack (keep entirely) |
+| `PlexServiceCore/` (submodule) | Fork-only Plex stack (`plexserviceinterfaces` + `plexapi`) — keep entirely |
 | `fork-docs/`, `.cursor/skills/`, `.cursor/rules/fork-*.mdc` | Docs and agent tooling |
 
 ### SmartTube — upstream files with Plex / registry hooks
