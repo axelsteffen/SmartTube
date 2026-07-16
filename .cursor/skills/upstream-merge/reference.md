@@ -1,5 +1,7 @@
 # Upstream Merge — Conflict Reference
 
+Prevention while coding: [fork-upstream-minimal.mdc](../../rules/fork-upstream-minimal.mdc) (isolate fork logic, `// FORK:` markers, keep touch points updated).
+
 ## Conflict Resolution Rules
 
 | Situation | Resolution |

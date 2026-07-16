@@ -1,0 +1,46 @@
+---
+description: Minimize edits to upstream SmartTube/MSC files; isolate fork code and mark/document touch points for easier upstream merges
+alwaysApply: true
+---
+
+# Fork: minimal upstream surface
+
+Goal: keep merges from [yuliskov/SmartTube](https://github.com/yuliskov/SmartTube) (and MediaServiceCore) small and predictable.
+
+## Prefer isolation (in order)
+
+1. **Fork-only files/modules** — e.g. `PlexServiceCore/`, `MediaSourceRegistry`, presenters under fork packages
+2. **Thin hooks in upstream files** — one registry call, `isPlex()` guard, or dispatch; no large Plex/business logic inline
+3. **Avoid** drive-by refactors, renames, or formatting of upstream code you did not need to touch
+
+## MediaServiceCore
+
+- No Plex code in MSC
+- Do not extend `mediaserviceinterfaces` for Plex (adapters in the fork)
+- Prefer `youtubeapi/` / upstream-compatible fixes; document in `MediaServiceCore/CHANGELOG_FORK.md`
+
+## When editing an upstream file
+
+Mark non-trivial fork blocks so conflicts are obvious:
+
+```java
+// FORK: Plex — skip YouTube-only UI (see fork-docs/CHANGELOG.md § Fork Touch Points)
+if (video != null && video.isPlex()) {
+    return;
+}
+// END FORK
+```
+
+- Use `// FORK: <short why>` … `// END FORK` for multi-line blocks
+- Single-line hooks may use a trailing `// FORK: …`
+- Do not wrap entire upstream methods; keep the marked region as small as possible
+
+## After adding/changing a hook
+
+1. Update **[Fork Touch Points](fork-docs/CHANGELOG.md#fork-touch-points)** and [`.cursor/skills/upstream-merge/reference.md`](../skills/upstream-merge/reference.md) if the file/area is new or the merge hint changed
+2. Add a `[Unreleased]` entry per [changelog-fork](changelog-fork.mdc)
+
+## Decision check (before coding)
+
+- Can this live in a fork-only class with a 1–5 line call site? → do that
+- Unsure whether to patch upstream? → propose the smaller-diff option first; wait for confirmation on larger upstream edits
