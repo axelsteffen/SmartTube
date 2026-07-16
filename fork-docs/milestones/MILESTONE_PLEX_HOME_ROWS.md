@@ -79,11 +79,11 @@ Restructure the Plex browse section into a Home-like layout (Continue Watching, 
 | Step | Status |
 |------|--------|
 | 1 Milestone doc | done |
-| 2 Sidebar under Home | in progress |
-| 3 PMS hubs API | open |
-| 4 Discover watchlist | open |
-| 5 Rewrite rows | open |
-| 6 Strings / changelog | open |
+| 2 Sidebar under Home | done |
+| 3 PMS hubs API | done |
+| 4 Discover watchlist | done |
+| 5 Rewrite rows | done |
+| 6 Strings / changelog | done |
 
 ## TV Context
 

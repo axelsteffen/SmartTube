@@ -11,6 +11,13 @@
     <string name="header_settings">Settings</string>
     <string name="header_channels">Channels</string>
     <string name="header_plex">Plex</string>
+    <string name="plex_row_continue_movies">Continue Watching</string>
+    <string name="plex_row_continue_shows">Continue Watching</string>
+    <string name="plex_row_watchlist">Watchlist</string>
+    <string name="plex_row_recently_added_movies">Recently Added</string>
+    <string name="plex_row_recently_added_shows">Recently Added</string>
+    <string name="plex_row_movies">Movies</string>
+    <string name="plex_row_shows">TV Shows</string>
     <string name="plex_not_available">Plex integration is not available yet.</string>
     <string name="plex_signin_to_browse">Sign in to Plex and choose a server to browse your library</string>
     <string name="plex_select_server">Select Plex server</string>

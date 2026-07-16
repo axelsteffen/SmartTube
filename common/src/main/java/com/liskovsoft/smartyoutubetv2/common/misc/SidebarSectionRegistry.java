@@ -2,6 +2,7 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 
 import android.content.Context;
 
+import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.plexapi.prefs.PlexPrefs;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
@@ -28,12 +29,36 @@ public final class SidebarSectionRegistry {
         }
     }
 
+    /**
+     * Inserts missing fork sections after Home ({@link MediaGroup#TYPE_HOME}).
+     * Does not move a section that is already present (user may have reordered it).
+     */
     public static void appendExtraSections(List<BrowseSection> sections, Context context) {
         for (BrowseSection section : getExtraSections(context)) {
             if (!containsSection(sections, section.getId())) {
-                sections.add(section);
+                insertAfterHome(sections, section);
             }
         }
+    }
+
+    private static void insertAfterHome(List<BrowseSection> sections, BrowseSection section) {
+        int homeIndex = indexOfSection(sections, MediaGroup.TYPE_HOME);
+        if (homeIndex >= 0) {
+            sections.add(homeIndex + 1, section);
+        } else if (sections.isEmpty()) {
+            sections.add(section);
+        } else {
+            sections.add(0, section);
+        }
+    }
+
+    private static int indexOfSection(List<BrowseSection> sections, int id) {
+        for (int i = 0; i < sections.size(); i++) {
+            if (sections.get(i).getId() == id) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public static boolean isExtraSection(int sectionId) {

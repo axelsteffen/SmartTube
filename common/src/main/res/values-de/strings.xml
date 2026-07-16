@@ -10,6 +10,14 @@
     <string name="header_playlists">Wiedergabelisten</string>
     <string name="header_settings">Einstellungen</string>
     <string name="header_channels">Kanäle</string>
+    <string name="header_plex">Plex</string>
+    <string name="plex_row_continue_movies">Weiterschauen</string>
+    <string name="plex_row_continue_shows">Weiterschauen</string>
+    <string name="plex_row_watchlist">Merkliste</string>
+    <string name="plex_row_recently_added_movies">Zuletzt hinzugefügt</string>
+    <string name="plex_row_recently_added_shows">Zuletzt hinzugefügt</string>
+    <string name="plex_row_movies">Filme</string>
+    <string name="plex_row_shows">Serien</string>
     <string name="subscriptions_signin_title">Abos anzeigen</string>
     <string name="subscriptions_signin_subtitle">Melden Sie sich an, um Ihre Abos anzuzeigen</string>
     <string name="subscriptions_signin_button_text">ANMELDEN</string>

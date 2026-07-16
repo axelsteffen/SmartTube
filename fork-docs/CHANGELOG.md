@@ -75,6 +75,10 @@ ATV search/channels remain YouTube-backed. Fallback inside provider still uses `
 
 ## [Unreleased]
 
+- **Plex Home Rows** ([MILESTONE_PLEX_HOME_ROWS.md](milestones/MILESTONE_PLEX_HOME_ROWS.md)): Sidebar inserts Plex under Home; browse emits Continue Watching, Discover Watchlist (movies), Recently Added, and Grid+Hub recommended rows (TV without watchlist).
+- **SidebarSectionRegistry.appendExtraSections**: Insert after `MediaGroup.TYPE_HOME` instead of appending at end.
+- **PlexBrowsePresenter**: Home-style row emit order; pagination for onDeck / recentlyAdded / watchlist kinds.
+- **common strings**: `plex_row_*` row titles (en + de).
 - **PlexMediaItemAdapter.isMovie** / **Video.isEmpty**: Plex movies were dropped as empty (YouTube `isMovie` = "Free with Ads"). Adapter always returns false; `Video.isEmpty` ignores `isMovie` for Plex. Fixes endless browse spinner with empty Movie rows.
 - **Video.isMembersOnly** / **PlexMediaItemAdapter.getDurationMs**: Plex TV shows (playlist containers, `videoId` null) were dropped when PMS sent `duration`. `isMembersOnly` now requires no playlist/reload keys; containers report duration 0.
 - **BrowsePresenter.updateVideoRows**: Hide progress on complete; skip empty `VideoGroup` after adapt; null-safe view checks.
